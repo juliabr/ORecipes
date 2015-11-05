@@ -1,0 +1,140 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Orecipes\n"
+"POT-Creation-Date: 2015-11-03 17:50+0100\n"
+"PO-Revision-Date: 2015-11-03 17:55+0100\n"
+"Last-Translator: \n"
+"Language-Team:  <hello@juliabr.com>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.7.4\n"
+"X-Poedit-Basepath: .\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Poedit-KeywordsList: __;_e;_n;_x\n"
+"X-Poedit-SearchPath-0: ..\n"
+
+#: ../class.orecipes.php:47
+msgid "Recipes"
+msgstr "Recettes"
+
+#: ../class.orecipes.php:48
+msgid "Recipe"
+msgstr "Recette"
+
+#: ../class.orecipes.php:49
+msgid "Add New"
+msgstr "Ajouter"
+
+#: ../class.orecipes.php:50
+msgid "Add a new recipe"
+msgstr "Ajouter une nouvelle recette"
+
+#: ../class.orecipes.php:51
+msgid "Edit"
+msgstr "Modifier"
+
+#: ../class.orecipes.php:52
+msgid "Edit Recipe"
+msgstr "Modifier la recette"
+
+#: ../class.orecipes.php:53
+msgid "View"
+msgstr "Afficher"
+
+#: ../class.orecipes.php:54
+msgid "View Recipe"
+msgstr "Afficher la recette"
+
+#: ../class.orecipes.php:149
+msgid "Not so easy"
+msgstr "Pas si facile"
+
+#: ../class.orecipes.php:152
+msgid "Easy"
+msgstr "Facile"
+
+#: ../class.orecipes.php:155
+msgid "Very easy"
+msgstr "Très facile"
+
+#: ../class.orecipes.php:163
+msgid "For"
+msgstr "Pour"
+
+#: ../class.orecipes.php:217 ../class.orecipes.php:247
+msgid "Introduction"
+msgstr "Introduction"
+
+#: ../class.orecipes.php:219
+msgid "Subtitle"
+msgstr "Sous-titre"
+
+#: ../class.orecipes.php:221
+msgid "Recipe Infos"
+msgstr "Informations sur la recette"
+
+#: ../class.orecipes.php:222
+msgid "Ingredients"
+msgstr "Ingrédients"
+
+#: ../class.orecipes.php:223
+msgid "Preparation Instructions"
+msgstr "Préparation"
+
+#: ../class.orecipes.php:224
+msgid "Tips"
+msgstr "Conseils"
+
+#: ../class.orecipes.php:226
+msgid "Color"
+msgstr "Couleur"
+
+#: ../class.orecipes.php:239
+msgid "Recipe Subtitle"
+msgstr "Sous-titre de la recette"
+
+#: ../class.orecipes.php:302
+msgid "Serve Size"
+msgstr "Pour"
+
+#: ../class.orecipes.php:307
+msgid "Preparation time"
+msgstr "Temps de préparation"
+
+#: ../class.orecipes.php:310
+msgid "Cook time"
+msgstr "Temps de cuisson"
+
+#: ../class.orecipes.php:313
+msgid "Rest time"
+msgstr "Temps de repos"
+
+#: ../class.orecipes.php:318
+msgid "Difficulty"
+msgstr "Difficulté"
+
+#: ../class.orecipes.php:321
+msgid "Vegetarian"
+msgstr "Végétarien"
+
+#: ../class.orecipes.php:321
+msgid "no"
+msgstr "non"
+
+#: ../class.orecipes.php:321
+msgid "yes"
+msgstr "oui"
+
+#: ../class.orecipes.php:340 ../class.orecipes.php:362
+msgid "Recipe Options"
+msgstr "Options pour les recettes"
+
+#: ../class.orecipes.php:371
+msgid "Recipe Slug"
+msgstr "Identifiant pour les recettes"
+
+#: ../class.orecipes.php:379
+msgid "Save Changes"
+msgstr "Enregistrer les modifications"
