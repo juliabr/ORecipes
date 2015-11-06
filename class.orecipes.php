@@ -82,7 +82,7 @@ class ORecipes {
 
 		if( $post->post_type =="post" ) {
 		    $actions = array_merge($actions, array(
-		        'convert' => sprintf('<a href="%s">'.__('Convert to recipe', 'orecipes').'</a>',
+		        'convert' => sprintf("<a href='%s' onclick=\"if ( confirm( '" . esc_js( __( "Are you sure you want to convert this article?" ) ) . "' ) ) { return true;}return false;\">".__('Convert to recipe', 'orecipes')."</a>",
 		            wp_nonce_url( sprintf('edit.php?post_type=recipe&action=convert_to_recipe&post_id=%d', $post->ID),
 		            'convert-to-recipe_'.$post->ID) )
 		    ));
@@ -228,6 +228,8 @@ class ORecipes {
 	function time_recipe($m) {
 
 		if(empty($m)) return '';
+		if( !is_numeric($m)) return $m;
+
 		$str = '';
 			
 		$h = floor($m/60);
@@ -251,7 +253,7 @@ class ORecipes {
 	}
 
 	function time_recipe_mf($m) {
-		if(!$m) return false;
+		if(!$m || !is_numeric($m)) return false;
 		$str = 'P';
 			
 		$h = floor($m/60);
@@ -314,7 +316,7 @@ class ORecipes {
 		wp_editor( $unescaped_content, 'post_content', array(
 			'textarea_rows' => 25,   
 			'media_buttons' => true,
-			'teeny'	=> true,
+			'teeny'	=> false,
 			'tinymce' => true
 	    ));
 	}
