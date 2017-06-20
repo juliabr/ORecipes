@@ -470,15 +470,16 @@ class ORecipes {
       extract( shortcode_atts( array(
          'id' => null,
          'cat' => null,
-         'number' => 10
+         'numberposts' => 10
       ), $atts ) );
 
-      $args = array( 'numberposts' => $nb, 'post_type' => 'recipe' );
+      $args = array( 'numberposts' => $numberposts, 'post_type' => 'recipe' );
 
       if( !empty($id) ) {
          $id = str_replace(' ', '', $id);
-         global $wpdb;
-         $recipes = $wpdb->get_results( "SELECT ode_posts.post_title, ode_posts.ID as ID, ode_recettes.id as recipe_id FROM ode_posts INNER JOIN ode_recettes ON ode_recettes.wordpress_id = ode_posts.ID WHERE ode_recettes.id IN (".$id.") AND ode_posts.post_status = 'publish'" );
+         $args['numberposts'] = 0;
+         $args['include'] = $id;
+         $recipes = get_posts( $args );
       }
       else if( !empty($cat) ) {
          $args['cat'] = $cat;
@@ -492,7 +493,7 @@ class ORecipes {
          //order by given ids
          $ordering_recipes = array();
          foreach ($recipes as $r) {
-            $key = array_search($r->recipe_id, $ordered_ids);
+            $key = array_search($r->ID, $ordered_ids);
             $ordered_recipes[$key] = $r;
          }
          ksort($ordered_recipes);
