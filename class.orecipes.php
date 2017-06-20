@@ -459,13 +459,59 @@ class ORecipes {
 			
     	}
 
-		wp_enqueue_style('themecustom', ORECIPES__PLUGIN_URL.'css/admin', array(), null);
+		wp_enqueue_style('themecustom', ORECIPES__PLUGIN_URL.'css/admin.css', array(), null);
 
 		if ( $hook_suffix != self::$menu_id )
 			return;
 
 	}
 
+   public static function recipe_shortcode( $atts, $content = null ) {
+      extract( shortcode_atts( array(
+         'id' => null,
+         'cat' => null,
+         'number' => 10
+      ), $atts ) );
+
+      $args = array( 'numberposts' => $nb, 'post_type' => 'recipe' );
+
+      if( !empty($id) ) {
+         $id = str_replace(' ', '', $id);
+         global $wpdb;
+         $recipes = $wpdb->get_results( "SELECT ode_posts.post_title, ode_posts.ID as ID, ode_recettes.id as recipe_id FROM ode_posts INNER JOIN ode_recettes ON ode_recettes.wordpress_id = ode_posts.ID WHERE ode_recettes.id IN (".$id.") AND ode_posts.post_status = 'publish'" );
+      }
+      else if( !empty($cat) ) {
+         $args['cat'] = $cat;
+         $recipes = get_posts( $args );
+      }
+
+      if( !$recipes ) return '';
+
+      if( !empty($id) ) {
+         $ordered_ids = explode(',', $id);
+         //order by given ids
+         $ordering_recipes = array();
+         foreach ($recipes as $r) {
+            $key = array_search($r->recipe_id, $ordered_ids);
+            $ordered_recipes[$key] = $r;
+         }
+         ksort($ordered_recipes);
+         $recipes = $ordered_recipes;
+      }
+      $output = '<div class="recipe-list">';
+      foreach($recipes as $r) {
+         $image = '<div class="item-image">'.get_the_post_thumbnail( $r->ID, 'small-feature').'</div>';
+         $output .= '<div class="item">
+            <a href="'.get_permalink($r->ID).'">
+               '.$image.'
+               <span class="item-title">'.$r->post_title.'</span>
+            </a>
+         </div>';
+      }
+      $output .= '</div>';
+
+      return $output;
+   }
 
 }
 

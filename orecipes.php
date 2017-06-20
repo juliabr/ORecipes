@@ -42,6 +42,10 @@ require_once( ORECIPES__PLUGIN_DIR . 'class.orecipes.php' );
 // Start up this plugin
 add_action( 'init', array( 'ORecipes', 'init' ) );
 
+// Shortcodes to display list of recipes into content
+add_shortcode( 'recettes', array( 'ORecipes', 'recipe_shortcode') );
+add_shortcode( 'recipes', array( 'ORecipes', 'recipe_shortcode') );
+
 //Wrapper
 
 function get_recipe_metas() {
