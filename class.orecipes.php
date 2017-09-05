@@ -225,7 +225,7 @@ class ORecipes {
 		return $meta;
 	}
 
-	function time_recipe($m) {
+	public static function time_recipe($m) {
 
 		if(empty($m)) return '';
 		if( !is_numeric($m)) return $m;
@@ -252,7 +252,7 @@ class ORecipes {
 		return trim($str);
 	}
 
-	function time_recipe_mf($m) {
+	public static function time_recipe_mf($m) {
 		if(!$m || !is_numeric($m)) return false;
 		$str = 'P';
 			
@@ -386,7 +386,7 @@ class ORecipes {
 		echo '</div></div>';
 	}
 
-	public function save_recipe_metas( $post_id ) {
+	public static function save_recipe_metas( $post_id ) {
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
 		if ( !isset($_POST['orecipes_nonce']) || !wp_verify_nonce( $_POST['orecipes_nonce'], plugin_basename( __FILE__ ) ) ) return;
 		if ( 'recipe' != $_POST['post_type'] ) return;
@@ -399,23 +399,23 @@ class ORecipes {
 	}
 
 	// Register the management page
-	public function add_admin_menu() {
+	public static function add_admin_menu() {
 		self::$menu_id = add_options_page( __( 'Recipe Options', 'orecipes' ), __( 'Recipe Options', 'orecipes' ), 'manage_options', 'orecipes', array('ORecipes', 'plugin_options') );
 	}
-	public function register_options() {
+	public static function register_options() {
 		register_setting( 'orecipes_options', 'orecipes', array('ORecipes', 'options_validate') );
 		//Flush rewrite rules in case recipe slug was updated
 		add_action( "update_option_orecipes", array('ORecipes', 'updated_option') );
 	}
-	public function options_validate($input) {
+	public static function options_validate($input) {
 		$input['recipe_slug'] = sanitize_title( $input['recipe_slug'] );
 		return $input;
 	}
-	public function updated_option() {
+	public static function updated_option() {
 		self::init_recipe_post_type();
 		flush_rewrite_rules();
 	}
-	public function plugin_options() {
+	public static function plugin_options() {
 		global $wpdb;
 		?>
 
