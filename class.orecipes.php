@@ -26,8 +26,11 @@ class ORecipes {
 		add_action( 'save_post', array( 'ORecipes', 'save_recipe_metas' ) );
 
 		//Custom actions in admin in order to convert posts to recipes
-		add_filter('post_row_actions', array( 'ORecipes', 'post_row_actions' ), 0, 2);
+      add_filter('post_row_actions', array( 'ORecipes', 'post_row_actions' ), 0, 2);
 		add_action( 'admin_action_convert_to_recipe', array( 'ORecipes', 'convert_to_recipe_action' ) );
+
+      //Add Json recipe schema
+      add_action('wp_head', array( 'ORecipes', 'add_json_recipe_schema' ) );
 
 	}
 	private static function init_recipe_post_type() {
@@ -182,46 +185,61 @@ class ORecipes {
 			global $post;
 			$post_id = $post->ID;
 		}
-		$meta_datas = get_post_custom($post_id);
-		$meta = array();
-		foreach($meta_datas as $key => $array) {
-			$meta[$key] = $array[0];
-		}
+      /* Check for a cached meta values */
+      $meta_datas_cache = wp_cache_get( $post_id, 'get_recipe_metas' );
 
-		$meta['preparation_time'] = self::time_recipe( $meta['preparation_min'] );
-		$meta['preparation_mf'] = self::time_recipe_mf( $meta['preparation_min'] );
-		$meta['cook_time'] = self::time_recipe( $meta['cook_min'] );
-		$meta['cook_mf'] = self::time_recipe_mf( $meta['cook_min'] );
-		$meta['rest_time'] = self::time_recipe( $meta['rest_min'] );
+      /* If meta datas were already cached, use it. */
+      if( !empty( $meta_datas_cache ) ) return $meta_datas_cache;
 
-		$meta['ingredients'] = preg_replace('/<li>(.*?)<\/li>/','<li class="ingredient" itemprop="recipeIngredient">$1</li>', $meta['ingredients']);
-		$meta['ingredients'] = wpautop($meta['ingredients']);
-		if( !empty($meta['tips']) )
-			$meta['tips'] = wpautop( $meta['tips'] );
-		if( !empty($meta['preparation']) )
-			$meta['preparation'] = apply_filters( 'the_content', $meta['preparation'] );
+      /* If there is no cached meta values, create them. */
+   	$meta_datas = get_post_custom($post_id);
+   	$meta = array();
+   	foreach($meta_datas as $key => $array) {
+   		$meta[$key] = $array[0];
+   	}
 
-		$meta['difficulty_stars'] = '';
-		for( $i=1; $i <=3; $i++) {
-			if($i <= $meta['difficulty']) $meta['difficulty_stars'] .= '<span class="diff on"></span>';
-			else $meta['difficulty_stars'] .= '<span class="diff off"></span>';
-		}
-		switch( $meta['difficulty'] ) {
-			case 3:
-				$meta['difficulty_text'] = __('Not so easy', 'orecipes');
-				break;
-			case 2:
-				$meta['difficulty_text'] = __('Easy', 'orecipes');
-				break;				
-			default:
-				$meta['difficulty_text'] = __('Very easy', 'orecipes');
-				break;
-		}
+   	$meta['preparation_time'] = self::time_recipe( $meta['preparation_min'] );
+   	$meta['preparation_mf'] = self::time_recipe_mf( $meta['preparation_min'] );
+   	$meta['cook_time'] = self::time_recipe( $meta['cook_min'] );
+   	$meta['cook_mf'] = self::time_recipe_mf( $meta['cook_min'] );
+   	$meta['rest_time'] = self::time_recipe( $meta['rest_min'] );
+      $meta['time_total_mf'] = self::time_recipe_mf( $meta['preparation_min'] + $meta['cook_min'] );
 
-		$meta['difficulty_stars'] = '<span class="diffs" title="'.$meta['difficulty_text'].'">'.$meta['difficulty_stars'].'</span>';
+      $meta['ingredients_array'] = false;
+      preg_match_all('!<li.*?>(.*?)</li>.*?!i', $meta['ingredients'], $ingredients_array);
+      if( !empty($ingredients_array) ) {
+         $meta['ingredients_array'] = array_map( 'strip_tags', $ingredients_array[1] );
+      }
 
-		if( empty($meta['color']) ) $meta['color'] = '#647747';
+   	$meta['ingredients'] = preg_replace('/<li>(.*?)<\/li>/','<li class="ingredient" itemprop="recipeIngredient">$1</li>', $meta['ingredients']);
+   	$meta['ingredients'] = wpautop($meta['ingredients']);
+   	if( !empty($meta['tips']) )
+   		$meta['tips'] = wpautop( $meta['tips'] );
+   	if( !empty($meta['preparation']) )
+   		$meta['preparation'] = apply_filters( 'the_content', $meta['preparation'] );
 
+      $meta['difficulty_stars'] = '';
+      for( $i=1; $i <=3; $i++) {
+   		if($i <= $meta['difficulty']) $meta['difficulty_stars'] .= '<span class="diff on"></span>';
+   		else $meta['difficulty_stars'] .= '<span class="diff off"></span>';
+   	}
+   	switch( $meta['difficulty'] ) {
+   		case 3:
+   			$meta['difficulty_text'] = __('Not so easy', 'orecipes');
+   			break;
+   		case 2:
+   			$meta['difficulty_text'] = __('Easy', 'orecipes');
+   			break;				
+   		default:
+   			$meta['difficulty_text'] = __('Very easy', 'orecipes');
+   			break;
+   	}
+
+   	$meta['difficulty_stars'] = '<span class="diffs" title="'.$meta['difficulty_text'].'">'.$meta['difficulty_stars'].'</span>';
+
+   	if( empty($meta['color']) ) $meta['color'] = '#647747';
+
+      wp_cache_set( $post_id, $meta, 'get_recipe_metas' );
 		return $meta;
 	}
 
@@ -302,8 +320,6 @@ class ORecipes {
 		echo '<label class="screen-reader-text" for="excerpt">'.__('Recipe Subtitle', 'orecipes').'</label>';
 		echo '<input type="text" name="subtitle" value="'.$subtitle.'" class="large-text" />';
 	}
-
-	
 
 	public static function box_recipe_intro() {
 		global $post;
@@ -465,6 +481,109 @@ class ORecipes {
 			return;
 
 	}
+
+   public static function add_json_recipe_schema() {
+
+      global $post;
+
+      if ( !is_singular('recipe') || empty($post) ) return;
+
+      $meta = self::get_recipe_metas();
+      $thumbnail = wp_get_attachment_image_src( get_post_thumbnail_id( $post->ID ), 'full' );
+      $thumbnail_src = $thumbnail[0];
+
+      $ld_json = array(
+         '@context' => 'http://schema.org',
+         '@type' => 'Recipe',
+         'datePublished' => get_the_date('Y-m-d'),
+         'author' => self::get_author_schema(),
+         'description' => strip_tags($post->post_content),
+         'image' => $thumbnail_src,
+         'name' => $post->post_title,
+         'cookTime' => $meta['time_total_mf'],
+         'prepTime' => $meta['preparation_mf'],
+         'recipeInstructions' => strip_tags($meta['preparation']),
+         'recipeYield' => $meta['yield']
+      );
+
+      if( false ) { //TODO: implement rating for recipes
+         $ld_json['aggregateRating'] = array(
+            '@type' => 'AggregateRating',
+            'bestRating' => '5',
+            'ratingCount' => '0', //ratingCount OR reviewCount
+            'ratingValue' => 0,
+            'reviewCount' => 0
+         );
+      }
+
+      if( $comments = self::get_comments_schema() ) {
+         $ld_json['comment'] = $comments;
+      }
+
+      if( !empty($meta['ingredients_array']) )
+         $ld_json['recipeIngredient'] = $meta['ingredients_array'];
+
+      if( !empty($meta['average_rating']) )
+         $ld_json['aggregateRating'] = array(
+            '@type' => 'AggregateRating',
+            'ratingValue' => $meta['average_rating'],
+            'reviewCount' => $meta['review_count']
+         );
+
+      printf( '<script type="application/ld+json">%s</script>', json_encode($ld_json) );
+   }
+
+   protected static function get_author_schema() {
+
+      global $post;
+
+      $author = array(
+         '@type' => 'Person',
+         'name' => get_the_author_meta('display_name', $post->post_author),
+         'url' => esc_url(get_author_posts_url(get_the_author_meta('ID', $post->post_author))),
+      );
+
+      if( get_the_author_meta('description') ) {
+         $author['description'] = get_the_author_meta('description');
+      }
+
+      if ( version_compare(get_bloginfo('version'), '4.2', '>=') ) {
+         $author_image = get_avatar_url( get_the_author_meta('user_email', $post->post_author), 96 );
+         if ($author_image) {
+            $author['image'] = array(
+              '@type' => 'ImageObject',
+              'url' => $author_image,
+              'height' => 96,
+              'width' => 96
+            );
+         }
+      }
+      return $author;
+   }
+
+   protected static function get_comments_schema() {
+
+      global $post;
+
+      $comments = array();
+      $post_comments = get_comments(array('post_id' => $post->ID, 'number' => 10, 'status' => 'approve', 'type' => 'comment'));
+
+      if ( !count($post_comments) ) return false;
+
+      foreach ($post_comments as $item) {
+         $comments[] = array(
+            '@type' => 'Comment',
+            'dateCreated' => $item->comment_date,
+            'description' => $item->comment_content,
+            'author' => array(
+               '@type' => 'Person',
+               'name' => $item->comment_author,
+               'url' => $item->comment_author_url,
+            )
+         );
+      }
+      return $comments;
+   }
 
    public static function recipe_shortcode( $atts, $content = null ) {
       extract( shortcode_atts( array(
