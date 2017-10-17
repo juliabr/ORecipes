@@ -4,7 +4,7 @@ class ORecipes {
 
 	private static $menu_id;
 	private static $meta_fields = array(
-		'yield', 'preparation_min', 'cook_min', 'rest_min', 'difficulty', 'vegetarian', 'ingredients', 'preparation', 'tips', 'color', 'subtitle'
+		'yield', 'preparation_min', 'cook_min', 'rest_min', 'freezing_min', 'difficulty', 'vegetarian', 'ingredients', 'preparation', 'tips', 'color', 'subtitle'
 	);
 
 	public static function init() {
@@ -36,7 +36,6 @@ class ORecipes {
 	private static function init_recipe_post_type() {
 
 		$options = get_option('orecipes');
-
 		$recipe_slug = !empty($options['recipe_slug']) ? $options['recipe_slug'] : 'recipe';
 
 		register_post_type( 'recipe', 
@@ -194,15 +193,19 @@ class ORecipes {
       /* If there is no cached meta values, create them. */
    	$meta_datas = get_post_custom($post_id);
    	$meta = array();
-   	foreach($meta_datas as $key => $array) {
-   		$meta[$key] = $array[0];
-   	}
+      foreach(self::$meta_fields as $meta_name) {
+         if( isset($meta_datas[$meta_name][0]) )
+            $meta[$meta_name] = $meta_datas[$meta_name][0];
+         else
+            $meta[$meta_name] = '';
+      }
 
    	$meta['preparation_time'] = self::time_recipe( $meta['preparation_min'] );
    	$meta['preparation_mf'] = self::time_recipe_mf( $meta['preparation_min'] );
    	$meta['cook_time'] = self::time_recipe( $meta['cook_min'] );
    	$meta['cook_mf'] = self::time_recipe_mf( $meta['cook_min'] );
-   	$meta['rest_time'] = self::time_recipe( $meta['rest_min'] );
+      $meta['rest_time'] = self::time_recipe( $meta['rest_min'] );
+   	$meta['freezing_min'] = self::time_recipe( $meta['freezing_min'] );
       $meta['time_total_mf'] = self::time_recipe_mf( $meta['preparation_min'] + $meta['cook_min'] );
 
       $meta['ingredients_array'] = false;
@@ -238,6 +241,8 @@ class ORecipes {
    	$meta['difficulty_stars'] = '<span class="diffs" title="'.$meta['difficulty_text'].'">'.$meta['difficulty_stars'].'</span>';
 
    	if( empty($meta['color']) ) $meta['color'] = '#647747';
+
+      $meta = apply_filters('orecipes_filter_metas', $meta);
 
       wp_cache_set( $post_id, $meta, 'get_recipe_metas' );
 		return $meta;
@@ -294,7 +299,6 @@ class ORecipes {
 
 	public static function register_meta_box() {
 
-		//replace post excerpt with rich text editor
 		add_meta_box('recipe_intro', __('Introduction', 'orecipes'), array( 'ORecipes', 'box_recipe_intro'), 'recipe', 'normal', 'high',  null );
 
 		add_meta_box( 'recipe_subtitle', __('Subtitle', 'orecipes'), array( 'ORecipes', 'box_recipe_subtitle'), 'recipe', 'normal', 'high',  null );
@@ -319,6 +323,7 @@ class ORecipes {
 		$subtitle = get_post_meta( $post->ID, 'subtitle', true );
 		echo '<label class="screen-reader-text" for="excerpt">'.__('Recipe Subtitle', 'orecipes').'</label>';
 		echo '<input type="text" name="subtitle" value="'.$subtitle.'" class="large-text" />';
+      echo '<p class="description">'.__('If empty, displays the recipe title. The featured image will be automatically displayed below this subtitle.', 'orecipes').'</p>';
 	}
 
 	public static function box_recipe_intro() {
@@ -339,6 +344,7 @@ class ORecipes {
 
 	public static function box_recipe_ingredients() {
 		global $post;
+      echo '<p class="description">'.__('Fill the list of ingredients with an unordered list, so each ingredient could be marked out.<br>You can fill multiple lists if you need sections. Texts outside lists won\'t be treated as ingredients.', 'orecipes').'</p>';
 		$ingredients = get_post_meta( $post->ID, 'ingredients', true );
 		wp_editor( $ingredients, 'ingredients', array(
 			'textarea_rows' => 15,   
@@ -391,10 +397,13 @@ class ORecipes {
 		$rest_min = get_post_meta( $post->ID, 'rest_min', true );
 		echo '<div class="field clearfix"><label for="rest_min">'.__('Rest time', 'orecipes').'</label><input type="text" name="rest_min" maxlength="4" value="'.$rest_min.'" /> minutes</div>';
 
+      $freezing_min = get_post_meta( $post->ID, 'freezing_min', true );
+      echo '<div class="field clearfix"><label for="freezing_min">'.__('Freezing time', 'orecipes').'</label><input type="text" name="freezing_min" maxlength="4" value="'.$freezing_min.'" /> minutes</div>';
+
 		echo '</div><div class="right">';
 		
 		$difficulty = get_post_meta( $post->ID, 'difficulty', true );
-		echo '<div class="field clearfix"><label for="difficulty">'.__('Difficulty', 'orecipes').'</label><select name="difficulty"><option value="1"'.selected( $difficulty, 1, 0).'>1</option><option value="2"'.selected( $difficulty, 2, 0).'>2</option><option value="3"'.selected( $difficulty, 3, 0).'>3</option></select></div>';
+		echo '<div class="field clearfix"><label for="difficulty">'.__('Difficulty', 'orecipes').'</label><select name="difficulty"><option value="1"'.selected( $difficulty, 1, 0).'>'.__('Very easy', 'orecipes').'</option><option value="2"'.selected( $difficulty, 2, 0).'>'.__('Easy', 'orecipes').'</option><option value="3"'.selected( $difficulty, 3, 0).'>'.__('Not so easy', 'orecipes').'</option></select></div>';
 		
 		$vegetarian = get_post_meta( $post->ID, 'vegetarian', true );
 		echo '<div class="field clearfix"><label for="vegetarian">'.__('Vegetarian', 'orecipes').'</label><select name="vegetarian"><option value="0"'.selected( $vegetarian, 0, 0).'>'.__('no', 'orecipes').'</option><option value="1"'.selected( $vegetarian, 1, 0).'>'.__('yes', 'orecipes').'</option></select></div>';
@@ -443,7 +452,8 @@ class ORecipes {
 		<div class="input">
 			<form method="post" action="options.php">
 				<?php settings_fields('orecipes_options'); ?>
-				<?php $options = get_option('orecipes'); ?>
+            <?php $options = get_option('orecipes'); ?>
+				<?php $activate_rating = isset($options['activate_rating']) ? $options['activate_rating'] : 0; ?>
 
 				<table class="form-table">
 					<tr>
@@ -452,6 +462,15 @@ class ORecipes {
 							<input type="text" name="orecipes[recipe_slug]" id="recipe_slug" value="<?php echo $options['recipe_slug']; ?>" />
 						</td>
 					</tr>
+               <tr>
+                  <th scope="row"><label for="activate_rating"><?php _e( 'Use rating for recipes', 'orecipes' ); ?></label></th>
+                  <td>
+                     <select id="activate_rating" name="orecipes[activate_rating]">
+                        <option value="1" <?php selected( $activate_rating, 1); ?>>oui</option>
+                        <option value="0" <?php selected( $activate_rating, 0); ?>>non</option>
+                     </select>
+                  </td>
+               </tr>
 				</table>
 
 				<p class="submit">

@@ -13,6 +13,9 @@
   border-bottom: 1px solid #ccc;
   margin-right: 10px; }
 
+.orecipes-form .left label {
+  width: 150px; }
+
 .orecipes-form label.large {
   width: 200px; }
 
@@ -27,12 +30,12 @@
 
 .orecipes-form .left {
   float: left;
-  width: 50%;
+  width: 60%;
   margin-right: 5%; }
 
 .orecipes-form .right {
   float: right;
-  width: 30%; }
+  width: 35%; }
 
 .mceLayout {
   background-color: #fff; }

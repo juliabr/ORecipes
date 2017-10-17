@@ -3,11 +3,11 @@
 **************************************************************************
 
 Plugin Name:  Ô Recipes
-Plugin URI:   http://lab.juliabr.com/orecipes/
+Plugin URI:   https://github.com/juliabr/ORecipes
 Description:  Add recipe as a custom post type -- recipes template with microformats
 Version:      1.0
 Author:       Julia Briend
-Author URI:   http://juliabr.com
+Author URI:   https://juliabr.com
 
 **************************************************************************
 
@@ -45,6 +45,17 @@ add_action( 'init', array( 'ORecipes', 'init' ) );
 // Shortcodes to display list of recipes into content
 add_shortcode( 'recettes', array( 'ORecipes', 'recipe_shortcode') );
 add_shortcode( 'recipes', array( 'ORecipes', 'recipe_shortcode') );
+
+
+//Modules to load?
+$options = get_option('orecipes');
+
+//Recipe rating
+$activate_rating = !empty($options['activate_rating']) ? $options['activate_rating'] : 0;
+if( $activate_rating ) {
+   require_once( ORECIPES__PLUGIN_DIR . 'class.orecipes.rating.php' );
+   add_action( 'init', array( 'ORecipes_Rating', 'init' ) );
+}
 
 //Wrapper
 
