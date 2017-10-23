@@ -4,8 +4,9 @@ class ORecipes {
 
 	private static $menu_id;
 	private static $meta_fields = array(
-		'yield', 'preparation_min', 'cook_min', 'rest_min', 'freezing_min', 'difficulty', 'vegetarian', 'ingredients', 'preparation', 'tips', 'color', 'subtitle'
+		'yield', 'adjust_serving', 'preparation_min', 'cook_min', 'rest_min', 'freezing_min', 'difficulty', 'ingredients', 'preparation', 'tips', 'color', 'subtitle'
 	);
+   private static $options;
 
 	public static function init() {
 
@@ -15,6 +16,9 @@ class ORecipes {
 		add_action( 'admin_menu', array( 'ORecipes', 'add_admin_menu' ) );
 		add_action('admin_init', array( 'ORecipes', 'register_options' ) );
 		add_action( 'admin_enqueue_scripts', array( 'ORecipes', 'admin_enqueues' ) );
+
+      //Options
+      self::$options = get_option('orecipes');
 
 		//Init Recipe CPT
 		self::init_recipe_post_type();
@@ -32,11 +36,13 @@ class ORecipes {
       //Add Json recipe schema
       add_action('wp_head', array( 'ORecipes', 'add_json_recipe_schema' ) );
 
+      //Add meta
+      add_filter('get_post_metadata', array( 'ORecipes', 'add_custom_recipe_metas' ), 10, 4);
+
 	}
 	private static function init_recipe_post_type() {
 
-		$options = get_option('orecipes');
-		$recipe_slug = !empty($options['recipe_slug']) ? $options['recipe_slug'] : 'recipe';
+		$recipe_slug = !empty(self::$options['recipe_slug']) ? self::$options['recipe_slug'] : 'recipe';
 
 		register_post_type( 'recipe', 
 			array(
@@ -179,74 +185,231 @@ class ORecipes {
 			return $subtitle;
 	}
 
+   public static function add_custom_recipe_metas( $value, $post_id, $meta_key, $single ) {
+      if( !isset($meta_key) || empty($meta_key) ) {
+         return $value;
+      }
+
+      //if meta_key is part of custom meta_fields, return raw value
+      if( in_array($meta_key, self::$meta_fields) ) return $value;
+
+      if( !$post_id ) {
+         global $post;
+         $post_id = $post->ID;
+      }
+      else {
+         $post = get_post($post_id);
+      }
+      if( $post->post_type != 'recipe') return $value;
+
+      /* Prevent infinite loop */
+      remove_filter( 'get_post_metadata', array( 'ORecipes', 'add_custom_recipe_metas' ), 10 );
+      $metas = self::get_recipe_metas($post_id);
+      add_filter( 'get_post_metadata', array( 'ORecipes', 'add_custom_recipe_metas' ), 10, 4 );
+
+      return isset($metas[$meta_key]) ? $metas[$meta_key] : $value;
+   }
+
 	public static function get_recipe_metas($post_id = false) {
-		if( !$post_id ) {
-			global $post;
-			$post_id = $post->ID;
-		}
+      if( !$post_id ) {
+         global $post;
+         $post_id = $post->ID;
+      } else {
+         $post = get_post($post_id);
+      }
+
       /* Check for a cached meta values */
       $meta_datas_cache = wp_cache_get( $post_id, 'get_recipe_metas' );
 
       /* If meta datas were already cached, use it. */
-      if( !empty( $meta_datas_cache ) ) return $meta_datas_cache;
-
-      /* If there is no cached meta values, create them. */
-   	$meta_datas = get_post_custom($post_id);
-   	$meta = array();
-      foreach(self::$meta_fields as $meta_name) {
-         if( isset($meta_datas[$meta_name][0]) )
-            $meta[$meta_name] = $meta_datas[$meta_name][0];
-         else
-            $meta[$meta_name] = '';
+      if( !empty( $meta_datas_cache ) ) {
+         return $meta_datas_cache;
       }
 
-   	$meta['preparation_time'] = self::time_recipe( $meta['preparation_min'] );
-   	$meta['preparation_mf'] = self::time_recipe_mf( $meta['preparation_min'] );
-   	$meta['cook_time'] = self::time_recipe( $meta['cook_min'] );
-   	$meta['cook_mf'] = self::time_recipe_mf( $meta['cook_min'] );
+      /* If there is no cached meta values, create them */
+      $meta = array();
+      foreach(self::$meta_fields as $meta_key) {
+         $meta[$meta_key] = get_post_meta( $post_id, $meta_key, true );
+      }
+
+      $meta['preparation_time'] = self::time_recipe( $meta['preparation_min'] );
+      $meta['preparation_mf'] = self::time_recipe_mf( $meta['preparation_min'] );
+      $meta['cook_time'] = self::time_recipe( $meta['cook_min'] );
+      $meta['cook_mf'] = self::time_recipe_mf( $meta['cook_min'] );
       $meta['rest_time'] = self::time_recipe( $meta['rest_min'] );
-   	$meta['freezing_min'] = self::time_recipe( $meta['freezing_min'] );
+      $meta['freezing_min'] = self::time_recipe( $meta['freezing_min'] );
       $meta['time_total_mf'] = self::time_recipe_mf( $meta['preparation_min'] + $meta['cook_min'] );
 
+      if( preg_match('!(\d+) ?(.+)!i', $meta['yield'], $yield_quantities) ) {
+         $meta['serving_count'] = $yield_quantities[1];
+         $meta['serving_type'] = $yield_quantities[2];
+      }
+      $meta['filtered_yield'] = self::markup_quantity_datas($meta['yield']);
+
       $meta['ingredients_array'] = false;
+      $meta['filtered_ingredients'] = $meta['ingredients'];
       preg_match_all('!<li.*?>(.*?)</li>.*?!i', $meta['ingredients'], $ingredients_array);
       if( !empty($ingredients_array) ) {
+         //Try to match quantities and ingredients
+         foreach($ingredients_array[1] as $ingredient) {
+            $ingredient_with_markup = self::markup_quantity_datas($ingredient);
+            if( $ingredient_with_markup != $ingredient )
+               $meta['filtered_ingredients'] = str_replace($ingredient, $ingredient_with_markup, $meta['ingredients']);
+         }
          $meta['ingredients_array'] = array_map( 'strip_tags', $ingredients_array[1] );
       }
 
-   	$meta['ingredients'] = preg_replace('/<li>(.*?)<\/li>/','<li class="ingredient" itemprop="recipeIngredient">$1</li>', $meta['ingredients']);
-   	$meta['ingredients'] = wpautop($meta['ingredients']);
-   	if( !empty($meta['tips']) )
-   		$meta['tips'] = wpautop( $meta['tips'] );
-   	if( !empty($meta['preparation']) )
-   		$meta['preparation'] = apply_filters( 'the_content', $meta['preparation'] );
+      $meta['filtered_ingredients'] = preg_replace('/<li>(.*?)<\/li>/','<li class="ingredient" itemprop="recipeIngredient">$1</li>', $meta['filtered_ingredients']);
+      $meta['filtered_ingredients'] = wpautop($meta['filtered_ingredients']);
+      if( !empty($meta['tips']) )
+         $meta['filtered_tips'] = wpautop( $meta['tips'] );
+      if( !empty($meta['preparation']) )
+         $meta['filtered_preparation'] = apply_filters( 'the_content', $meta['preparation'] );
 
       $meta['difficulty_stars'] = '';
       for( $i=1; $i <=3; $i++) {
-   		if($i <= $meta['difficulty']) $meta['difficulty_stars'] .= '<span class="diff on"></span>';
-   		else $meta['difficulty_stars'] .= '<span class="diff off"></span>';
-   	}
-   	switch( $meta['difficulty'] ) {
-   		case 3:
-   			$meta['difficulty_text'] = __('Not so easy', 'orecipes');
-   			break;
-   		case 2:
-   			$meta['difficulty_text'] = __('Easy', 'orecipes');
-   			break;				
-   		default:
-   			$meta['difficulty_text'] = __('Very easy', 'orecipes');
-   			break;
-   	}
+         if($i <= $meta['difficulty']) $meta['difficulty_stars'] .= '<span class="diff on"></span>';
+         else $meta['difficulty_stars'] .= '<span class="diff off"></span>';
+      }
+      switch( $meta['difficulty'] ) {
+         case 3:
+            $meta['difficulty_text'] = __('Not so easy', 'orecipes');
+            break;
+         case 2:
+            $meta['difficulty_text'] = __('Easy', 'orecipes');
+            break;            
+         default:
+            $meta['difficulty_text'] = __('Very easy', 'orecipes');
+            break;
+      }
 
-   	$meta['difficulty_stars'] = '<span class="diffs" title="'.$meta['difficulty_text'].'">'.$meta['difficulty_stars'].'</span>';
+      $meta['difficulty_stars'] = '<span class="diffs" title="'.$meta['difficulty_text'].'">'.$meta['difficulty_stars'].'</span>';
 
-   	if( empty($meta['color']) ) $meta['color'] = '#647747';
+      if( empty($meta['color']) ) $meta['color'] = '#647747';
 
-      $meta = apply_filters('orecipes_filter_metas', $meta);
+      //Special diets
+      $special_diets = isset(self::$options['special_diets']) ? maybe_unserialize(self::$options['special_diets']) : false;
+      if($special_diets) {
+         foreach($special_diets as $special_diet) {
+            if( has_tag($special_diet, $post) ) {
+               $tag =  get_term_by( 'slug', $special_diet, 'post_tag');
+               $meta['special_diets'][$special_diet] = array(
+                  'slug' => $special_diet,
+                  'name' => $tag->name,
+                  'url' => get_term_link($tag),
+               );
+            }
+         }
+      }
+      $meta['special_diets'] = isset($meta['special_diets']) ? maybe_serialize($meta['special_diets']) : false;
 
+      /* Set cache */
       wp_cache_set( $post_id, $meta, 'get_recipe_metas' );
-		return $meta;
+
+      return $meta;
 	}
+
+   private static function markup_quantity_datas($ingredient) {
+
+      //Find a quantity or return
+      if( !preg_match_all('!((\d| to \d| à \d|\.\d|,\d|/\d)+)( ?\D+)!i', $ingredient, $quantity_inside_array) ) return $ingredient;
+
+      for( $i = 0; $i < count($quantity_inside_array[0]); $i++ ) {
+         $quantity_value = $quantity_inside_array[1][$i];
+         $ingredient_part = $quantity_inside_array[0][$i];
+      
+         //Find a more complex quantity value, like "6 to 8 apples" or fractions
+         $complex = false;
+         if( preg_match('!(1/2|1/4|3/4)!i', $ingredient_part, $complex_quantity_inside) ) {
+            $quantity_value = $complex_quantity_inside[0];
+            $complex = 'fraction';
+         }
+         elseif( preg_match('!(\d+ (to|à) \d+)!i', $ingredient_part, $complex_quantity_inside) ) {
+            $quantity_value = $complex_quantity_inside[0];
+            $complex = 'multiple';
+         }
+         //TODO: internationalize
+
+         //Grams
+         if( preg_match('@'.$quantity_value.'( ?gr?| ?grammes?| ?grams?)@i', $ingredient_part, $quantity_match) ) {
+            $quantity_unit = 'g';
+         }
+         //Milligrams
+         elseif( preg_match('@'.$quantity_value.'( ?mg| ?milligrams| ?milligrammes)@i', $ingredient_part, $quantity_match) ) {
+            $quantity_unit = 'mg';
+         }
+         //Kilograms
+         elseif( preg_match('@'.$quantity_value.'( ?kg| ?kilos?| kilogrammes?| kilograms?)@i', $ingredient_part, $quantity_match) ) {
+            $quantity_unit = 'kg';
+         }
+         //Litres
+         elseif( preg_match('@'.$quantity_value.'( ?l| litres?| ?liters?)@i', $ingredient_part, $quantity_match) ) {
+            $quantity_unit = 'l';
+         }
+         //Centiliters
+         elseif( preg_match('@'.$quantity_value.'( ?cl| ?décilitres?| ?decilitres?| ?centiliters?)@i', $ingredient_part, $quantity_match) ) {
+            $quantity_unit = 'cl';
+         }
+         //Deciliters
+         elseif( preg_match('@'.$quantity_value.'( ?dl| ?décilitres?| ?decilitres?| ?deciliters?)@i', $ingredient_part, $quantity_match) ) {
+            $quantity_unit = 'dl';
+         }
+         //Milliliters
+         elseif( preg_match('@'.$quantity_value.'( ?ml| ?millilitres?| ?milliliters?)@i', $ingredient_part, $quantity_match) ) {
+            $quantity_unit = 'ml';
+         }
+         //Tablespoon
+         elseif( preg_match('@'.$quantity_value.'( ?tablespoons?| ?càs| ?cas| cuillères? à soupe| cuillerées? à soupe)@i', $ingredient_part, $quantity_match) ) {
+            $quantity_unit = 'tablespoon';
+         }
+         //Teaspoon
+         elseif( preg_match('@'.$quantity_value.'( ?teaspoons?| ?cc| cuillères? à café| cuillerées? à café)@i', $ingredient_part, $quantity_match) ) {
+            $quantity_unit = 'teaspoon';
+         }
+         //ounce / oz
+         elseif( preg_match('@'.$quantity_value.'( ?oz| ?ounces?| ?onces?)@i', $ingredient_part, $quantity_match) ) {
+            $quantity_unit = 'oz';
+         }
+         //fluid ounce / fl oz
+         elseif( preg_match('@'.$quantity_value.'( ?fl ?oz)@i', $ingredient_part, $quantity_match) ) {
+            $quantity_unit = 'floz';
+         }
+         //pound
+         elseif( preg_match('@'.$quantity_value.'( ?lb| ?pound)@i', $ingredient_part, $quantity_match) ) {
+            $quantity_unit = 'lb';
+         }
+         
+         if( !empty($quantity_match) && isset($quantity_unit) ) {
+            $raw_unit = $quantity_match[1];
+         }
+         else {
+            $raw_unit = '';
+            $quantity_unit = 'none';
+         }
+
+         //Now create markup
+         if($complex == 'multiple') {
+            $ingredient_with_markup = $ingredient;
+            preg_match_all('!(\d+)!i', $quantity_value, $all_quantitites);
+            foreach($all_quantitites[0] as $quantity) {
+               $ingredient_with_markup = str_replace($quantity, '<span data-quantity-unit="'.$quantity_unit.'" data-quantity-value="'.$quantity.'" class="quantity">'.$quantity.'</span>', $ingredient_with_markup);
+            }
+         }
+         elseif($complex == 'fraction') {
+            $real_values = array(
+               '1/2' => 0.5,
+               '1/4' => 0.25,
+               '3/4' => 0.75
+            );
+            $ingredient_with_markup = str_replace($quantity_value.$raw_unit, '<span data-quantity-unit="'.$quantity_unit.'" data-quantity-value="'.$real_values[$quantity_value].'" class="quantity">'.$quantity_value.'</span>'.$raw_unit, $ingredient);
+         }
+         else {
+            $ingredient_with_markup = str_replace($quantity_value.$raw_unit, '<span data-quantity-unit="'.$quantity_unit.'" data-quantity-value="'.$quantity_value.'" class="quantity">'.$quantity_value.'</span>'.$raw_unit, $ingredient);
+         }
+
+      }
+      return $ingredient_with_markup;
+   }
 
 	public static function time_recipe($m) {
 
@@ -384,29 +547,42 @@ class ORecipes {
 		echo '<div class="orecipes-form clearfix">';
 
 		$yield = get_post_meta( $post->ID, 'yield', true );
-		echo '<div class="field clearfix"><label for="yield">'.__('Yield', 'orecipes').'</label><input type="text" name="yield" value="'.$yield.'" class="yield" /></div>';
+		echo '<div class="field clearfix"><label for="yield" class="input-label">'.__('Yield', 'orecipes').'</label><input type="text" name="yield" value="'.$yield.'" class="yield" /></div>';
+
+      $adjust_serving = get_post_meta( $post->ID, 'adjust_serving', true );
+      echo '<div class="field clearfix"><label for="adjust_serving" class="checkbox-label"><input type="checkbox" id="adjust_serving" name="adjust_serving" value="1" '.checked($adjust_serving, 1 , false).'>'.__('Allows to automatically adjust serving counts', 'orecipes').'</label></div>';
 
 		echo '<div class="left">';
 
 		$preparation_min = get_post_meta( $post->ID, 'preparation_min', true );
-		echo '<div class="field clearfix"><label for="preparation_min">'.__('Preparation time', 'orecipes').'</label><input type="text" name="preparation_min" maxlength="4" value="'.$preparation_min.'" /> minutes</div>';
+		echo '<div class="field clearfix"><label for="preparation_min" class="input-label">'.__('Preparation time', 'orecipes').'</label><input type="text" name="preparation_min" maxlength="4" value="'.$preparation_min.'" /> minutes</div>';
 
 		$cook_min = get_post_meta( $post->ID, 'cook_min', true );
-		echo '<div class="field clearfix"><label for="cook_min">'.__('Cook time', 'orecipes').'</label><input type="text" name="cook_min" maxlength="4" value="'.$cook_min.'" /> minutes</div>';
+		echo '<div class="field clearfix"><label for="cook_min" class="input-label">'.__('Cook time', 'orecipes').'</label><input type="text" name="cook_min" maxlength="4" value="'.$cook_min.'" /> minutes</div>';
 		
 		$rest_min = get_post_meta( $post->ID, 'rest_min', true );
-		echo '<div class="field clearfix"><label for="rest_min">'.__('Rest time', 'orecipes').'</label><input type="text" name="rest_min" maxlength="4" value="'.$rest_min.'" /> minutes</div>';
+		echo '<div class="field clearfix"><label for="rest_min" class="input-label">'.__('Rest time', 'orecipes').'</label><input type="text" name="rest_min" maxlength="4" value="'.$rest_min.'" /> minutes</div>';
 
       $freezing_min = get_post_meta( $post->ID, 'freezing_min', true );
-      echo '<div class="field clearfix"><label for="freezing_min">'.__('Freezing time', 'orecipes').'</label><input type="text" name="freezing_min" maxlength="4" value="'.$freezing_min.'" /> minutes</div>';
+      echo '<div class="field clearfix"><label for="freezing_min" class="input-label">'.__('Freezing time', 'orecipes').'</label><input type="text" name="freezing_min" maxlength="4" value="'.$freezing_min.'" /> minutes</div>';
 
 		echo '</div><div class="right">';
 		
 		$difficulty = get_post_meta( $post->ID, 'difficulty', true );
-		echo '<div class="field clearfix"><label for="difficulty">'.__('Difficulty', 'orecipes').'</label><select name="difficulty"><option value="1"'.selected( $difficulty, 1, 0).'>'.__('Very easy', 'orecipes').'</option><option value="2"'.selected( $difficulty, 2, 0).'>'.__('Easy', 'orecipes').'</option><option value="3"'.selected( $difficulty, 3, 0).'>'.__('Not so easy', 'orecipes').'</option></select></div>';
+		echo '<div class="field clearfix"><label for="difficulty" class="input-label">'.__('Difficulty', 'orecipes').'</label><select name="difficulty"><option value="1"'.selected( $difficulty, 1, 0).'>'.__('Very easy', 'orecipes').'</option><option value="2"'.selected( $difficulty, 2, 0).'>'.__('Easy', 'orecipes').'</option><option value="3"'.selected( $difficulty, 3, 0).'>'.__('Not so easy', 'orecipes').'</option></select></div>';
 		
-		$vegetarian = get_post_meta( $post->ID, 'vegetarian', true );
-		echo '<div class="field clearfix"><label for="vegetarian">'.__('Vegetarian', 'orecipes').'</label><select name="vegetarian"><option value="0"'.selected( $vegetarian, 0, 0).'>'.__('no', 'orecipes').'</option><option value="1"'.selected( $vegetarian, 1, 0).'>'.__('yes', 'orecipes').'</option></select></div>';
+      //TODO
+      //Special diets
+      $special_diets = isset(self::$options['special_diets']) ? maybe_unserialize(self::$options['special_diets']) : false;
+      if($special_diets) {
+         foreach($special_diets as $special_diet) {
+            $is_special_diet = has_tag($special_diet, $post);
+            $tag =  get_term_by( 'slug', $special_diet, 'post_tag');
+            if( $tag ) {
+               echo '<div class="field clearfix"><label for="special_diets-'.$special_diet.'" class="checkbox-label"><input type="checkbox" id="special_diets-'.$special_diet.'" name="special_diets['.$special_diet.']" value="1" '.checked($is_special_diet, 1, false).'>'.$tag->name.'</label></div>';
+            }
+         }
+      }
 
 		echo '</div></div>';
 	}
@@ -421,6 +597,29 @@ class ORecipes {
 			//sanitize ?
 			update_post_meta( $post_id, $meta, $_POST[$meta] );
 		}
+
+      //Special diets
+      $special_diets = isset(self::$options['special_diets']) ? maybe_unserialize(self::$options['special_diets']) : false;
+      if($special_diets) {
+         //Creating an array with all tags slugs to add
+         $tags_slugs = array();
+         $post_tags = get_the_terms($post_id, 'post_tag');
+         //Adding all tags which are not as 'special_diets'
+         if( $post_tags ) {
+            foreach($post_tags as $post_tag) {
+               if( !in_array($post_tag->slug, $special_diets) ) $tags_slugs[] = $post_tag->slug;
+            }
+         }
+         //If tag posted (checkbox), add them
+         foreach($special_diets as $special_diet) {
+            if( isset($_POST['special_diets'][$special_diet]) )
+               $tags_slugs[] = $special_diet;
+         }
+         $tags_slugs = array_unique( $tags_slugs );
+
+         //wp_set_object_terms with last arg == false so tags will replace existing tags
+         wp_set_object_terms($post_id, $tags_slugs, 'post_tag', false);
+      }
 	}
 
 	// Register the management page
@@ -433,7 +632,8 @@ class ORecipes {
 		add_action( "update_option_orecipes", array('ORecipes', 'updated_option') );
 	}
 	public static function options_validate($input) {
-		$input['recipe_slug'] = sanitize_title( $input['recipe_slug'] );
+      $input['recipe_slug'] = sanitize_title( $input['recipe_slug'] );
+		$input['special_diets'] = maybe_serialize( $input['special_diets'] );
 		return $input;
 	}
 	public static function updated_option() {
@@ -452,14 +652,13 @@ class ORecipes {
 		<div class="input">
 			<form method="post" action="options.php">
 				<?php settings_fields('orecipes_options'); ?>
-            <?php $options = get_option('orecipes'); ?>
-				<?php $activate_rating = isset($options['activate_rating']) ? $options['activate_rating'] : 0; ?>
+				<?php $activate_rating = isset(self::$options['activate_rating']) ? self::$options['activate_rating'] : 0; ?>
 
 				<table class="form-table">
 					<tr>
 						<th scope="row"><label for="recipe_slug"><?php _e( 'Recipe Slug', 'orecipes' ); ?></label></th>
 						<td>
-							<input type="text" name="orecipes[recipe_slug]" id="recipe_slug" value="<?php echo $options['recipe_slug']; ?>" />
+							<input type="text" name="orecipes[recipe_slug]" id="recipe_slug" value="<?php echo self::$options['recipe_slug']; ?>" />
 						</td>
 					</tr>
                <tr>
@@ -469,6 +668,51 @@ class ORecipes {
                         <option value="1" <?php selected( $activate_rating, 1); ?>>oui</option>
                         <option value="0" <?php selected( $activate_rating, 0); ?>>non</option>
                      </select>
+                  </td>
+               </tr>
+               <tr>
+                  <th scope="row"><label><?php _e( 'Special diets', 'orecipes' ); ?></label></th>
+                  <td>
+                     <?php $all_tags = get_tags( array('hide_empty' => 0) );
+                     $special_diets = isset(self::$options['special_diets']) ? maybe_unserialize(self::$options['special_diets']) : array( 'vegan', 'gluten_free' );
+                     $i = 0;
+                     foreach( $special_diets as $special_diet) :?>
+                     <div class="diet-fields-container">
+                        <select name="orecipes[special_diets][]" id="special_diets-<?php echo $i; ?>">
+                           <option value="0"><?php _e('Choose a tag in the list', 'orecipes'); ?></option>
+                           <?php foreach($all_tags as $tag) : ?>
+                           <option value="<?php echo $tag->slug ?>" <?php selected( $special_diet, $tag->slug); ?>><?php echo $tag->name; ?></option>
+                           <?php endforeach; ?>
+                        </select>
+                        <button class="button-secondary remove-diet"><?php _e('Remove', 'orecipes'); ?></button>
+                     </div>
+                     <?php $i++; endforeach; ?>
+                     <button id="add-diet-btn" class="button-secondary"><?php _e('Add a special diet', 'orecipes'); ?></button>
+
+                     <p><?php __('Special diets (like <em>vegetarian</em>, <em>gluten free</em>...) will be highlighted in recipes.', 'orecipes'); ?></p>
+
+                     <script>
+                        jQuery(document).ready(function($){
+
+                           var countSelects = $('.diet-fields-container').length;
+                           var dietClone = $('.diet-fields-container').first().clone();
+
+                           $('.diet-fields-container').on('click', '.remove-diet', function(e) {
+                              e.preventDefault();
+                              $(this).parent().remove();
+                           });
+                           $('#add-diet-btn').click( function(e) {
+                              e.preventDefault();
+                              console.log("countSelects = "+countSelects);
+                              var newId = 'special_diets-'+countSelects;
+                              var newName = 'orecipes[special_diets][]';
+                              var newDiet = dietClone.clone();
+                              countSelects++;
+                              newDiet.find('select').attr('id', newId).attr('name', newName).find('option').prop("selected", false);
+                              $(this).before(newDiet);
+                           });
+                        });
+                     </script>
                   </td>
                </tr>
 				</table>

@@ -4,7 +4,7 @@
 .orecipes-form .field {
   margin-bottom: 10px; }
 
-.orecipes-form label {
+.orecipes-form label.input-label  {
   float: left;
   display: block;
   width: 120px;
@@ -12,15 +12,18 @@
   font-weight: bold;
   border-bottom: 1px solid #ccc;
   margin-right: 10px; }
-
+.orecipes-form label.checkbox-label {
+   font-weight: normal;
+}
 .orecipes-form .left label {
   width: 150px; }
 
 .orecipes-form label.large {
   width: 200px; }
 
-.orecipes-form input {
+.orecipes-form input[type="text"] {
   width: 50px; }
+
 
 .orecipes-form input.yield {
   width: 300px; }
@@ -31,11 +34,11 @@
 .orecipes-form .left {
   float: left;
   width: 60%;
-  margin-right: 5%; }
+  margin-right: 3%; }
 
 .orecipes-form .right {
   float: right;
-  width: 35%; }
+  width: 37%; }
 
 .mceLayout {
   background-color: #fff; }
@@ -200,3 +203,7 @@ td.participation_id img {
 
 .clearfix {
   zoom: 1; }
+
+.diet-fields-container {
+   margin-bottom: 20px;
+}
