@@ -254,7 +254,7 @@ class ORecipes {
          foreach($ingredients_array[1] as $ingredient) {
             $ingredient_with_markup = self::markup_quantity_datas($ingredient);
             if( $ingredient_with_markup != $ingredient )
-               $meta['filtered_ingredients'] = str_replace($ingredient, $ingredient_with_markup, $meta['ingredients']);
+               $meta['filtered_ingredients'] = str_replace($ingredient, $ingredient_with_markup, $meta['filtered_ingredients']);
          }
          $meta['ingredients_array'] = array_map( 'strip_tags', $ingredients_array[1] );
       }
@@ -303,6 +303,8 @@ class ORecipes {
       }
       $meta['special_diets'] = isset($meta['special_diets']) ? maybe_serialize($meta['special_diets']) : false;
 
+      $meta = apply_filters('orecipes_filter_metas', $meta);
+
       /* Set cache */
       wp_cache_set( $post_id, $meta, 'get_recipe_metas' );
 
@@ -312,7 +314,9 @@ class ORecipes {
    private static function markup_quantity_datas($ingredient) {
 
       //Find a quantity or return
-      if( !preg_match_all('!((\d| to \d| à \d|\.\d|,\d|/\d)+)( ?\D+)!i', $ingredient, $quantity_inside_array) ) return $ingredient;
+      if( !preg_match_all('!((\d|½| to \d| à \d|\.\d|,\d|/\d)+)( ?\D+)!i', $ingredient, $quantity_inside_array) ) return $ingredient;
+
+      $ingredient_with_markup = $ingredient;
 
       for( $i = 0; $i < count($quantity_inside_array[0]); $i++ ) {
          $quantity_value = $quantity_inside_array[1][$i];
@@ -320,7 +324,7 @@ class ORecipes {
       
          //Find a more complex quantity value, like "6 to 8 apples" or fractions
          $complex = false;
-         if( preg_match('!(1/2|1/4|3/4)!i', $ingredient_part, $complex_quantity_inside) ) {
+         if( preg_match('!(1/2|1/4|3/4|½|¼|¾)!i', $ingredient_part, $complex_quantity_inside) ) {
             $quantity_value = $complex_quantity_inside[0];
             $complex = 'fraction';
          }
@@ -389,7 +393,6 @@ class ORecipes {
 
          //Now create markup
          if($complex == 'multiple') {
-            $ingredient_with_markup = $ingredient;
             preg_match_all('!(\d+)!i', $quantity_value, $all_quantitites);
             foreach($all_quantitites[0] as $quantity) {
                $ingredient_with_markup = str_replace($quantity, '<span data-quantity-unit="'.$quantity_unit.'" data-quantity-value="'.$quantity.'" class="quantity">'.$quantity.'</span>', $ingredient_with_markup);
@@ -397,14 +400,17 @@ class ORecipes {
          }
          elseif($complex == 'fraction') {
             $real_values = array(
+               '½' => 0.5,
+               '¼' => 0.25,
+               '¾' => 0.75,
                '1/2' => 0.5,
                '1/4' => 0.25,
                '3/4' => 0.75
             );
-            $ingredient_with_markup = str_replace($quantity_value.$raw_unit, '<span data-quantity-unit="'.$quantity_unit.'" data-quantity-value="'.$real_values[$quantity_value].'" class="quantity">'.$quantity_value.'</span>'.$raw_unit, $ingredient);
+            $ingredient_with_markup = str_replace($quantity_value.$raw_unit, '<span data-quantity-unit="'.$quantity_unit.'" data-quantity-value="'.$real_values[$quantity_value].'" data-quantity-initial-value="'.$quantity_value.'" class="quantity">'.$quantity_value.'</span>'.$raw_unit, $ingredient_with_markup);
          }
          else {
-            $ingredient_with_markup = str_replace($quantity_value.$raw_unit, '<span data-quantity-unit="'.$quantity_unit.'" data-quantity-value="'.$quantity_value.'" class="quantity">'.$quantity_value.'</span>'.$raw_unit, $ingredient);
+            $ingredient_with_markup = str_replace($quantity_value.$raw_unit, '<span data-quantity-unit="'.$quantity_unit.'" data-quantity-value="'.$quantity_value.'" class="quantity">'.$quantity_value.'</span>'.$raw_unit, $ingredient_with_markup);
          }
 
       }
@@ -595,7 +601,11 @@ class ORecipes {
 
 		foreach(self::$meta_fields as $meta) {
 			//sanitize ?
-			update_post_meta( $post_id, $meta, $_POST[$meta] );
+         if(isset($_POST[$meta])) {
+			   update_post_meta( $post_id, $meta, $_POST[$meta] );
+         } else {
+            delete_post_meta( $post_id, $meta );
+         }
 		}
 
       //Special diets
