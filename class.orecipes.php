@@ -314,7 +314,8 @@ class ORecipes {
    private static function markup_quantity_datas($ingredient) {
 
       //Find a quantity or return
-      if( !preg_match_all('!((\d|½| to \d| à \d|\.\d|,\d|/\d)+)( ?\D+)!i', $ingredient, $quantity_inside_array) ) return $ingredient;
+      //TODO: strip_tags? If digits in URL => bug
+      if( !preg_match_all('!((\d|½| to \d| à \d|\.\d|,\d|/\d)+)( ?\D+)!i', strip_tags($ingredient), $quantity_inside_array) ) return $ingredient;
 
       $ingredient_with_markup = $ingredient;
 
