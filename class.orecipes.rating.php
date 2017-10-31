@@ -20,7 +20,7 @@ class ORecipes_Rating {
       add_filter( 'orecipes_filter_metas', array( 'ORecipes_Rating', 'get_rating_metas') );
 	}
 
-	private static function comments_additional_fields() {
+	public static function comments_additional_fields() {
       global $post;
       global $wp_query;
 

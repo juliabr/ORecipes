@@ -1005,6 +1005,7 @@ class ORecipes {
       require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
       dbDelta( $sql );
 
+      delete_site_option( 'orecipes_db_version' );
       add_site_option( 'orecipes_db_version', ORECIPES_DB_VERSION );
 
       $all_recipes = get_posts( array('post_type' => 'recipe', 'numberposts' => '-1') );
