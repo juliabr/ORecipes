@@ -2,7 +2,9 @@
 
 class ORecipes {
 
-	private static $menu_id;
+   private static $menu_id;
+   private static $table_name = 'recipes';
+	private static $flag_recipe_save = false;
 	private static $meta_fields = array(
 		'yield', 'adjust_serving', 'preparation_min', 'cook_min', 'rest_min', 'freezing_min', 'difficulty', 'ingredients', 'preparation', 'tips', 'color', 'subtitle'
 	);
@@ -28,6 +30,8 @@ class ORecipes {
 
 		//Save recipe metas
 		add_action( 'save_post', array( 'ORecipes', 'save_recipe_metas' ) );
+      //Update recipe table
+      add_action('save_post', array( 'ORecipes', 'save_recipes_table'), 10, 2);
 
 		//Custom actions in admin in order to convert posts to recipes
       add_filter('post_row_actions', array( 'ORecipes', 'post_row_actions' ), 0, 2);
@@ -38,6 +42,8 @@ class ORecipes {
 
       //Add meta
       add_filter('get_post_metadata', array( 'ORecipes', 'add_custom_recipe_metas' ), 10, 4);
+
+      
 
 	}
 	private static function init_recipe_post_type() {
@@ -79,11 +85,6 @@ class ORecipes {
 		) );
 		remove_post_type_support( 'recipe', 'editor', 'excerpt' );
 
-	}
-
-	public static function plugin_activation() {
-		self::init_recipe_post_type();
-		flush_rewrite_rules();
 	}
 
 	public static function post_row_actions($actions, $post) {
@@ -907,6 +908,124 @@ class ORecipes {
       return $output;
    }
 
+   public static function save_recipes_table( $post_id, $post ) {
+
+      if( self::$flag_recipe_save ) return; //prevent duplicate entry
+      self::$flag_recipe_save = true;
+
+      if ( wp_is_post_revision($post_id) ) return;
+      if ( !current_user_can( 'edit_post', $post_id ) ) return;
+      if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+
+      if( $post->post_type != 'recipe' ) return;
+
+      //If form wasn't submitted (autosave for example) don't proceed to update
+      if ( !isset($_POST['orecipes_nonce']) || !wp_verify_nonce( $_POST['orecipes_nonce'], plugin_basename( __FILE__ ) ) ) return;
+
+      global $wpdb;
+      $recipe_exists = $wpdb->get_row( $wpdb->prepare("SELECT * FROM ".$wpdb->prefix.self::$table_name." WHERE wordpress_id = %d", $post_id) );
+      //if recipe doesn't exist in recipes table, insert post datas
+      if( !$recipe_exists ) {
+         $wpdb->insert( $wpdb->prefix.self::$table_name, array('wordpress_ID' => $post_id) );
+      }
+      self::update_recipe_table($post_id, $post);
+   }
+
+   public static function update_recipe_table( $post_id, $post ) {
+      global $wpdb;
+      
+      //Post datas
+      //TODO: apply_filters, escape sth?
+      $data['title'] = $post->post_title;
+      $data['date'] = $post->post_date;
+
+      $data['image_url'] = '';
+      $post_thumbnail_id = get_post_thumbnail_id( $post_id );
+      if( $post_thumbnail_id && $image_attributes = wp_get_attachment_image_src($post_thumbnail_id) ) {
+         $data['image_url'] = $image_attributes[0];
+      }
+
+      $data['author'] = get_the_author_meta('display_name', $post->post_author);
+      $data['introduction'] = $post->post_content;
+      $data['yield'] = get_post_meta($post_id, 'yield', true);
+      $data['prepa_min'] = get_post_meta($post_id, 'prepa_min', true);
+      $data['cook_min'] = get_post_meta($post_id, 'cook_min', true);
+      $data['rest_min'] = get_post_meta($post_id, 'rest_min', true);
+      $data['freezing_min'] = get_post_meta($post_id, 'freezing_min', true);
+      $data['difficulty'] = get_post_meta($post_id, 'difficulty', true);
+      $data['ingredients'] = get_post_meta($post_id, 'ingredients', true);
+      $data['preparation'] = get_post_meta($post_id, 'preparation', true);
+      $data['tips'] = get_post_meta($post_id, 'tips', true);
+
+      //Get recipe taxonomies and implode them
+      $taxonomies = array( 'category' => 'categories', 'post_tag' => 'tags' );
+      foreach( $taxonomies as $tax => $translation ) {
+         $post_terms = wp_get_post_terms( $post_id, $tax );
+         if( $post_terms && is_array($post_terms) ) {
+            $term_list = array();
+            foreach( $post_terms as $term ) {
+               $term_list[] = $term->name;
+            }
+            $data[$translation] = implode( ',', $term_list );
+         }
+         else $data[$translation] = '';
+      }
+         
+      $wpdb->update( $wpdb->prefix . self::$table_name, $data, array('wordpress_ID' => $post_id) );
+   }
+
+   public static function db_update() {
+      global $wpdb;
+
+      $table_name = $wpdb->prefix . self::$table_name;
+      $charset_collate = $wpdb->get_charset_collate();
+
+      $sql = "CREATE TABLE $table_name (
+        `recipe_ID` int(10) NOT NULL AUTO_INCREMENT,
+        `wordpress_ID` int(10) NOT NULL,
+        `date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+        `image_url` varchar(250) NOT NULL,
+        `title` varchar(100) NOT NULL,
+        `categories` varchar(200) NOT NULL,
+        `tags` varchar(200) NOT NULL,
+        `author` varchar(200) NOT NULL,
+        `introduction` text NOT NULL,
+        `yield` varchar(30) NOT NULL,
+        `prepa_min` mediumint(8) NOT NULL,
+        `cook_min` mediumint(8) NOT NULL,
+        `rest_min` mediumint(8) NOT NULL,
+        `freezing_min` mediumint(8) NOT NULL,
+        `difficulty` enum('1','2','3') NOT NULL,
+        `ingredients` text NOT NULL,
+        `preparation` text NOT NULL,
+        `tips` text NOT NULL,
+         PRIMARY KEY (recipe_ID)
+      ) $charset_collate;";
+
+      require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+      dbDelta( $sql );
+
+      add_site_option( 'orecipes_db_version', ORECIPES_DB_VERSION );
+
+      $all_recipes = get_posts( array('post_type' => 'recipe', 'numberposts' => '-1') );
+      foreach($all_recipes as $recipe) {
+         $recipe_exists = $wpdb->get_row( $wpdb->prepare("SELECT * FROM ".$wpdb->prefix.self::$table_name." WHERE wordpress_id = %d", $recipe->ID) );
+         if( !$recipe_exists ) {
+            $wpdb->insert( $wpdb->prefix.self::$table_name, array('wordpress_ID' => $recipe->ID) );
+         }
+         self::update_recipe_table($recipe->ID, $recipe);
+      }
+   }      
+   public static function plugin_activation() {
+      self::init_recipe_post_type();
+      flush_rewrite_rules();
+      self::db_update();
+   }
+   public static function update_db_check() {
+      if ( get_site_option( 'orecipes_db_version' ) != ORECIPES_DB_VERSION ) {
+         self::db_update();
+      }
+   }
 }
 
 ?>

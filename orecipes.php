@@ -36,6 +36,12 @@ if ( !function_exists( 'add_action' ) ) {
 
 define( 'ORECIPES__PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'ORECIPES__PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'ORECIPES_VERSION', '1.0' );
+define( 'ORECIPES_DB_VERSION', '1.0' );
+
+register_activation_hook( __FILE__, array( 'ORecipes', 'plugin_activation' ) );
+//register_deactivation_hook( __FILE__, array( 'ORecipes', 'plugin_deactivation' ) );
+add_action( 'plugins_loaded',  array( 'ORecipes', 'update_db_check' ) );
 
 require_once( ORECIPES__PLUGIN_DIR . 'class.orecipes.php' );
 
@@ -72,8 +78,5 @@ function the_subtitle( $before = '', $after = '', $echo = true, $default = '' ) 
 	return ORecipes::the_subtitle( $before, $after, $echo, $default );
 }
 endif;
-
-register_activation_hook( __FILE__, array( 'ORecipes', 'plugin_activation' ) );
-
 
 ?>
