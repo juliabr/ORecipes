@@ -17,7 +17,7 @@ class ORecipes_Rating {
       // Update comment meta data from comment editing screen 
       add_action( 'edit_comment', array( 'ORecipes_Rating', 'extend_comment_edit_rating') );
       //Aff rating metas to recipe metas
-      add_filter( 'orecipes_filter_metas', array( 'ORecipes_Rating', 'get_rating_metas') );
+      add_filter( 'orecipes_filter_metas', array( 'ORecipes_Rating', 'get_rating_metas'), 10, 2 );
 	}
 
 	public static function comments_additional_fields() {
@@ -97,10 +97,12 @@ class ORecipes_Rating {
       endif;
    }
 
-   public static function get_rating_metas( $metas ) {
+   public static function get_rating_metas( $metas, $post_id ) {
 
-      global $post;
-      $post_id = $post->ID;
+      if(!$post_id) {
+         global $post;
+         $post_id = $post->ID;
+      }
 
       $comments = get_comments( array(
          'post_id' => $post_id,

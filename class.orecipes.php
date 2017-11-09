@@ -222,11 +222,6 @@ class ORecipes {
       /* Check for a cached meta values */
       $meta_datas_cache = wp_cache_get( $post_id, 'get_recipe_metas' );
 
-      /* If meta datas were already cached, use it. */
-      if( !empty( $meta_datas_cache ) ) {
-         return $meta_datas_cache;
-      }
-
       /* If there is no cached meta values, create them */
       $meta = array();
       foreach(self::$meta_fields as $meta_key) {
@@ -304,7 +299,7 @@ class ORecipes {
       }
       $meta['special_diets'] = isset($meta['special_diets']) ? maybe_serialize($meta['special_diets']) : false;
 
-      $meta = apply_filters('orecipes_filter_metas', $meta);
+      $meta = apply_filters('orecipes_filter_metas', $meta, $post_id);
 
       /* Set cache */
       wp_cache_set( $post_id, $meta, 'get_recipe_metas' );
@@ -1016,7 +1011,7 @@ class ORecipes {
          }
          self::update_recipe_table($recipe->ID, $recipe);
       }
-   }      
+   }
    public static function plugin_activation() {
       self::init_recipe_post_type();
       flush_rewrite_rules();
