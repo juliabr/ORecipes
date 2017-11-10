@@ -21,6 +21,8 @@ class ORecipes {
 
       //Options
       self::$options = get_option('orecipes');
+      if( isset(self::$options['special_diets']) && empty(self::$options['special_diets']) )
+         unset(self::$options['special_diets']);
 
 		//Init Recipe CPT
 		self::init_recipe_post_type();
@@ -76,7 +78,7 @@ class ORecipes {
 				'taxonomies' => array( 'category', 'post_tag' ),
 				'can_export' => true,
 				'register_meta_box_cb' => array( 'ORecipes', 'register_meta_box'),
-				'has_archive' => 'recipes'
+				'has_archive' => false
 			)
 		);
 
@@ -285,7 +287,7 @@ class ORecipes {
 
       //Special diets
       $special_diets = isset(self::$options['special_diets']) ? maybe_unserialize(self::$options['special_diets']) : false;
-      if($special_diets) {
+      if( !empty($special_diets)) {
          foreach($special_diets as $special_diet) {
             if( has_tag($special_diet, $post) ) {
                $tag =  get_term_by( 'slug', $special_diet, 'post_tag');
