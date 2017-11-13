@@ -1,147 +1,216 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Orecipes\n"
-"POT-Creation-Date: 2015-11-05 19:21+0100\n"
-"PO-Revision-Date: 2015-11-05 19:22+0100\n"
+"POT-Creation-Date: 2017-11-11 16:49+0100\n"
+"PO-Revision-Date: 2017-11-11 16:54+0100\n"
 "Last-Translator: \n"
-"Language-Team:  <hello@juliabr.com>\n"
+"Language-Team: <hello@juliabr.com>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.7.4\n"
+"X-Generator: Poedit 2.0.4\n"
 "X-Poedit-Basepath: .\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Poedit-KeywordsList: __;_e;_n;_x\n"
 "X-Poedit-SearchPath-0: ..\n"
 
-#: ../class.orecipes.php:42
+#: ../class.orecipes.php:58
 msgid "Recipes"
 msgstr "Recettes"
 
-#: ../class.orecipes.php:43
+#: ../class.orecipes.php:59
 msgid "Recipe"
 msgstr "Recette"
 
-#: ../class.orecipes.php:44
+#: ../class.orecipes.php:60
 msgid "Add New"
 msgstr "Ajouter"
 
-#: ../class.orecipes.php:45
+#: ../class.orecipes.php:61
 msgid "Add a new recipe"
 msgstr "Ajouter une nouvelle recette"
 
-#: ../class.orecipes.php:46
+#: ../class.orecipes.php:62
 msgid "Edit"
 msgstr "Modifier"
 
-#: ../class.orecipes.php:47
+#: ../class.orecipes.php:63
 msgid "Edit Recipe"
 msgstr "Modifier la recette"
 
-#: ../class.orecipes.php:48
+#: ../class.orecipes.php:64
 msgid "View"
 msgstr "Afficher"
 
-#: ../class.orecipes.php:49
+#: ../class.orecipes.php:65
 msgid "View Recipe"
 msgstr "Afficher la recette"
 
-#: ../class.orecipes.php:85
+#: ../class.orecipes.php:96
 msgid "Are you sure you want to convert this article?"
 msgstr "Êtes-vous sûr-e de vouloir convertir cet article ?"
 
-#: ../class.orecipes.php:85
+#: ../class.orecipes.php:96
 msgid "Convert to recipe"
 msgstr "Convertir en recette"
 
-#: ../class.orecipes.php:211
+#: ../class.orecipes.php:274 ../class.orecipes.php:577
 msgid "Not so easy"
 msgstr "Pas si facile"
 
-#: ../class.orecipes.php:214
+#: ../class.orecipes.php:277 ../class.orecipes.php:577
 msgid "Easy"
 msgstr "Facile"
 
-#: ../class.orecipes.php:217
+#: ../class.orecipes.php:280 ../class.orecipes.php:577
 msgid "Very easy"
 msgstr "Très facile"
 
-#: ../class.orecipes.php:280 ../class.orecipes.php:310
+#: ../class.orecipes.php:470 ../class.orecipes.php:499
 msgid "Introduction"
 msgstr "Introduction"
 
-#: ../class.orecipes.php:282
+#: ../class.orecipes.php:472
 msgid "Subtitle"
 msgstr "Sous-titre"
 
-#: ../class.orecipes.php:284
+#: ../class.orecipes.php:474
 msgid "Recipe Infos"
 msgstr "Informations sur la recette"
 
-#: ../class.orecipes.php:285
+#: ../class.orecipes.php:475
 msgid "Ingredients"
 msgstr "Ingrédients"
 
-#: ../class.orecipes.php:286
+#: ../class.orecipes.php:476
 msgid "Preparation Instructions"
 msgstr "Préparation"
 
-#: ../class.orecipes.php:287
+#: ../class.orecipes.php:477
 msgid "Tips"
 msgstr "Conseils"
 
-#: ../class.orecipes.php:289
+#: ../class.orecipes.php:479
 msgid "Color"
 msgstr "Couleur"
 
-#: ../class.orecipes.php:302
+#: ../class.orecipes.php:492
 msgid "Recipe Subtitle"
 msgstr "Sous-titre de la recette"
 
-#: ../class.orecipes.php:365
+#: ../class.orecipes.php:494
+msgid ""
+"If empty, displays the recipe title. The featured image will be "
+"automatically displayed below this subtitle."
+msgstr "Si vide, affiche le titre de la recette."
+
+#: ../class.orecipes.php:515
+msgid ""
+"Fill the list of ingredients with an unordered list, so each ingredient "
+"could be marked out.<br>You can fill multiple lists if you need sections. "
+"Texts outside lists won't be treated as ingredients."
+msgstr ""
+"Remplissez la liste des ingrédients avec une liste à puces, un ingrédient "
+"par ligne. <br>Vous pouvez faire plusieurs listes si vous avez besoin "
+"d'une présentation par sections. Les textes en dehors des listes à puces "
+"ne seront pas traités comme des ingrédients."
+
+#: ../class.orecipes.php:555
 msgid "Yield"
 msgstr "Pour"
 
-#: ../class.orecipes.php:370
+#: ../class.orecipes.php:558
+msgid "Allows to automatically adjust serving counts"
+msgstr "Permettre d'ajuster automatiquement les quantités"
+
+#: ../class.orecipes.php:563
 msgid "Preparation time"
 msgstr "Temps de préparation"
 
-#: ../class.orecipes.php:373
+#: ../class.orecipes.php:566
 msgid "Cook time"
 msgstr "Temps de cuisson"
 
-#: ../class.orecipes.php:376
+#: ../class.orecipes.php:569
 msgid "Rest time"
 msgstr "Temps de repos"
 
-#: ../class.orecipes.php:381
+#: ../class.orecipes.php:572
+msgid "Freezing time"
+msgstr "Temps de congélation"
+
+#: ../class.orecipes.php:577
 msgid "Difficulty"
 msgstr "Difficulté"
 
-#: ../class.orecipes.php:384
-msgid "Vegetarian"
-msgstr "Végétarien"
-
-#: ../class.orecipes.php:384
-msgid "no"
-msgstr "non"
-
-#: ../class.orecipes.php:384
-msgid "yes"
-msgstr "oui"
-
-#: ../class.orecipes.php:403 ../class.orecipes.php:425
+#: ../class.orecipes.php:636 ../class.orecipes.php:659
 msgid "Recipe Options"
 msgstr "Options pour les recettes"
 
-#: ../class.orecipes.php:434
+#: ../class.orecipes.php:668
 msgid "Recipe Slug"
 msgstr "Identifiant pour les recettes"
 
-#: ../class.orecipes.php:442
+#: ../class.orecipes.php:674
+msgid "Use rating for recipes"
+msgstr "Utiliser les notes pour les recettes"
+
+#: ../class.orecipes.php:683
+msgid "Special diets"
+msgstr "Régimes spéciaux"
+
+#: ../class.orecipes.php:691
+msgid "Choose a tag in the list"
+msgstr "Choisir une étiquette dans la liste"
+
+#: ../class.orecipes.php:696
+msgid "Remove"
+msgstr "Supprimer"
+
+#: ../class.orecipes.php:699
+msgid "Add a special diet"
+msgstr "Ajouter un régime spécial"
+
+#: ../class.orecipes.php:701
+msgid ""
+"Special diets (like <em>vegetarian</em>, <em>gluten free</em>...) will be "
+"highlighted in recipes."
+msgstr ""
+"Les régimes spéciaux (comme <em>végétarien</em>, <em>sans gluten</em>...) "
+"seront mis en évidence dans les recettes."
+
+#: ../class.orecipes.php:730
 msgid "Save Changes"
 msgstr "Enregistrer les modifications"
+
+#: ../class.orecipes.rating.php:30
+msgid "Rate the recipe"
+msgstr "Noter la recette"
+
+#: ../class.orecipes.rating.php:53
+msgid ""
+"You forgot to rate the recipe. Please go back and fill the rating field."
+msgstr ""
+"Vous avez oublié de noter la recette. Veuillez retourner en arrière et "
+"remplir le champ."
+
+#: ../class.orecipes.rating.php:60 ../class.orecipes.rating.php:66
+msgid "Rating"
+msgstr "Note"
+
+#: ../class.orecipes.rating.php:75
+msgid "Note: "
+msgstr "Note :"
+
+#~ msgid "Vegetarian"
+#~ msgstr "Végétarien"
+
+#~ msgid "no"
+#~ msgstr "non"
+
+#~ msgid "yes"
+#~ msgstr "oui"
 
 #~ msgid "For"
 #~ msgstr "Pour"
