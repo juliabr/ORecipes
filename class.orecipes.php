@@ -45,7 +45,9 @@ class ORecipes {
       //Add meta
       add_filter('get_post_metadata', array( 'ORecipes', 'add_custom_recipe_metas' ), 10, 4);
 
-      
+      // Add recipes count column for users list in admin
+      add_filter('manage_users_columns', array( 'ORecipes', 'add_recipes_count_column') );
+      add_filter('manage_users_custom_column', array( 'ORecipes', 'manage_recipes_count_column'), 10, 3);
 
 	}
 	private static function init_recipe_post_type() {
@@ -1023,6 +1025,24 @@ class ORecipes {
       if ( get_site_option( 'orecipes_db_version' ) != ORECIPES_DB_VERSION ) {
          self::db_update();
       }
+   }
+
+   public static function add_recipes_count_column($columns) {
+      $columns['recipes_count'] = __( 'Recipes', 'orecipes' );
+      return $columns;
+   }
+
+   public static function manage_recipes_count_column($value, $column_name, $user_id) {
+      if( $column_name == 'recipes_count' ) {
+         $admin_url = admin_url('edit.php?author='.$user_id.'&post_type=recipe');
+         return '<a href="'.$admin_url.'">'.self::count_author_recipes($user_id).'</a>';
+      }
+   }
+
+   public static function count_author_recipes($user_id) {
+      global $wpdb;
+      $where = get_posts_by_author_sql('recipe', TRUE, $user_id);
+      return $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->posts $where");
    }
 }
 
