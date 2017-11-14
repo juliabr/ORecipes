@@ -1034,8 +1034,10 @@ class ORecipes {
 
    public static function manage_recipes_count_column($value, $column_name, $user_id) {
       if( $column_name == 'recipes_count' ) {
+         $recipe_count = self::count_author_recipes($user_id);
+         if( !$recipe_count ) return $recipe_count;
          $admin_url = admin_url('edit.php?author='.$user_id.'&post_type=recipe');
-         return '<a href="'.$admin_url.'">'.self::count_author_recipes($user_id).'</a>';
+         return '<a href="'.$admin_url.'">'.$recipe_count.'</a>';
       }
    }
 
