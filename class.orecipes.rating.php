@@ -8,7 +8,7 @@ class ORecipes_Rating {
       add_action( 'comment_form_logged_in_after', array( 'ORecipes_Rating', 'comments_additional_fields') );
       add_action( 'comment_form_after_fields', array( 'ORecipes_Rating', 'comments_additional_fields') );
       // Save the rating along with comment
-      add_action( 'comment_post', array( 'ORecipes_Rating', 'save_comment_rating') );
+      add_action( 'comment_post', array( 'ORecipes_Rating', 'save_comment_rating'), 10, 1 );
       // Add the filter to check whether the rating field has been filled
       add_filter( 'preprocess_comment', array( 'ORecipes_Rating', 'verify_comment_form') );
       add_filter( 'comment_text', array( 'ORecipes_Rating', 'modify_comment') );
@@ -38,7 +38,7 @@ class ORecipes_Rating {
       }
 	}
 
-   private static function save_comment_rating() {
+   public static function save_comment_rating($comment_id) {
       if ( ( isset( $_POST['rating'] ) ) && ( $_POST['rating'] != '') ) {
          $rating = wp_filter_nohtml_kses($_POST['rating']);
          add_comment_meta( $comment_id, 'rating', $rating );
