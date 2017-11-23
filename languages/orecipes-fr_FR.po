@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Orecipes\n"
-"POT-Creation-Date: 2017-11-13 17:33+0100\n"
-"PO-Revision-Date: 2017-11-13 19:11+0100\n"
+"POT-Creation-Date: 2017-11-23 14:43+0100\n"
+"PO-Revision-Date: 2017-11-23 14:43+0100\n"
 "Last-Translator: \n"
 "Language-Team: <hello@juliabr.com>\n"
 "Language: fr\n"
@@ -15,7 +15,7 @@ msgstr ""
 "X-Poedit-KeywordsList: __;_e;_n;_x\n"
 "X-Poedit-SearchPath-0: ..\n"
 
-#: ../class.orecipes.php:60 ../class.orecipes.php:1031
+#: ../class.orecipes.php:60 ../class.orecipes.php:1053
 msgid "Recipes"
 msgstr "Recettes"
 
@@ -55,57 +55,57 @@ msgstr "Êtes-vous sûr-e de vouloir convertir cet article ?"
 msgid "Convert to recipe"
 msgstr "Convertir en recette"
 
-#: ../class.orecipes.php:276 ../class.orecipes.php:579
+#: ../class.orecipes.php:276 ../class.orecipes.php:581
 msgid "Not so easy"
 msgstr "Pas si facile"
 
-#: ../class.orecipes.php:279 ../class.orecipes.php:579
+#: ../class.orecipes.php:279 ../class.orecipes.php:581
 msgid "Easy"
 msgstr "Facile"
 
-#: ../class.orecipes.php:282 ../class.orecipes.php:579
+#: ../class.orecipes.php:282 ../class.orecipes.php:581
 msgid "Very easy"
 msgstr "Très facile"
 
-#: ../class.orecipes.php:472 ../class.orecipes.php:501
+#: ../class.orecipes.php:472 ../class.orecipes.php:503
 msgid "Introduction"
 msgstr "Introduction"
 
-#: ../class.orecipes.php:474
+#: ../class.orecipes.php:475
 msgid "Subtitle"
 msgstr "Sous-titre"
 
-#: ../class.orecipes.php:476
+#: ../class.orecipes.php:477
 msgid "Recipe Infos"
 msgstr "Informations sur la recette"
 
-#: ../class.orecipes.php:477
+#: ../class.orecipes.php:478
 msgid "Ingredients"
 msgstr "Ingrédients"
 
-#: ../class.orecipes.php:478
+#: ../class.orecipes.php:479
 msgid "Preparation Instructions"
 msgstr "Préparation"
 
-#: ../class.orecipes.php:479
+#: ../class.orecipes.php:480
 msgid "Tips"
 msgstr "Conseils"
 
-#: ../class.orecipes.php:481
+#: ../class.orecipes.php:483
 msgid "Color"
 msgstr "Couleur"
 
-#: ../class.orecipes.php:494
+#: ../class.orecipes.php:496
 msgid "Recipe Subtitle"
 msgstr "Sous-titre de la recette"
 
-#: ../class.orecipes.php:496
+#: ../class.orecipes.php:498
 msgid ""
 "If empty, displays the recipe title. The featured image will be "
 "automatically displayed below this subtitle."
 msgstr "Si vide, affiche le titre de la recette."
 
-#: ../class.orecipes.php:517
+#: ../class.orecipes.php:519
 msgid ""
 "Fill the list of ingredients with an unordered list, so each ingredient "
 "could be marked out.<br>You can fill multiple lists if you need sections. "
@@ -116,63 +116,71 @@ msgstr ""
 "présentation par sections. Les textes en dehors des listes à puces ne seront "
 "pas traités comme des ingrédients."
 
-#: ../class.orecipes.php:557
+#: ../class.orecipes.php:559
 msgid "Yield"
 msgstr "Pour"
 
-#: ../class.orecipes.php:560
+#: ../class.orecipes.php:562
 msgid "Allows to automatically adjust serving counts"
 msgstr "Permettre d'ajuster automatiquement les quantités"
 
-#: ../class.orecipes.php:565
+#: ../class.orecipes.php:567
 msgid "Preparation time"
 msgstr "Temps de préparation"
 
-#: ../class.orecipes.php:568
+#: ../class.orecipes.php:570
 msgid "Cook time"
 msgstr "Temps de cuisson"
 
-#: ../class.orecipes.php:571
+#: ../class.orecipes.php:573
 msgid "Rest time"
 msgstr "Temps de repos"
 
-#: ../class.orecipes.php:574
+#: ../class.orecipes.php:576
 msgid "Freezing time"
 msgstr "Temps de congélation"
 
-#: ../class.orecipes.php:579
+#: ../class.orecipes.php:581
 msgid "Difficulty"
 msgstr "Difficulté"
 
-#: ../class.orecipes.php:638 ../class.orecipes.php:661
+#: ../class.orecipes.php:640 ../class.orecipes.php:663
 msgid "Recipe Options"
 msgstr "Options pour les recettes"
 
-#: ../class.orecipes.php:670
+#: ../class.orecipes.php:674
 msgid "Recipe Slug"
 msgstr "Identifiant pour les recettes"
 
-#: ../class.orecipes.php:676
+#: ../class.orecipes.php:680
 msgid "Use rating for recipes"
 msgstr "Utiliser les notes pour les recettes"
 
-#: ../class.orecipes.php:685
+#: ../class.orecipes.php:689
+msgid "Use subtitle"
+msgstr "Utiliser un sous-titre"
+
+#: ../class.orecipes.php:698
+msgid "Use custom colors for recipe templates"
+msgstr "Utiliser des couleurs personnalisés pour les pages recettes"
+
+#: ../class.orecipes.php:707
 msgid "Special diets"
 msgstr "Régimes spéciaux"
 
-#: ../class.orecipes.php:693
+#: ../class.orecipes.php:715
 msgid "Choose a tag in the list"
 msgstr "Choisir une étiquette dans la liste"
 
-#: ../class.orecipes.php:698
+#: ../class.orecipes.php:720
 msgid "Remove"
 msgstr "Supprimer"
 
-#: ../class.orecipes.php:701
+#: ../class.orecipes.php:723
 msgid "Add a special diet"
 msgstr "Ajouter un régime spécial"
 
-#: ../class.orecipes.php:703
+#: ../class.orecipes.php:725
 msgid ""
 "Special diets (like <em>vegetarian</em>, <em>gluten free</em>...) will be "
 "highlighted in recipes."
@@ -180,7 +188,7 @@ msgstr ""
 "Les régimes spéciaux (comme <em>végétarien</em>, <em>sans gluten</em>...) "
 "seront mis en évidence dans les recettes."
 
-#: ../class.orecipes.php:732
+#: ../class.orecipes.php:754
 msgid "Save Changes"
 msgstr "Enregistrer les modifications"
 
