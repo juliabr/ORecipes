@@ -23,6 +23,8 @@ class ORecipes {
       self::$options = get_option('orecipes');
       if( isset(self::$options['special_diets']) && empty(self::$options['special_diets']) )
          unset(self::$options['special_diets']);
+      if( !isset(self::$options['use_colors']) ) self::$options['use_colors'] = 0;
+      if( !isset(self::$options['use_subtitle']) ) self::$options['use_subtitle'] = 0;
 
       //Init Recipe CPT
       self::init_recipe_post_type();
@@ -93,7 +95,7 @@ class ORecipes {
 
    public static function post_row_actions($actions, $post) {
 
-      if( $post->post_type =="post" ) {
+      if( current_user_can( 'manage_options') && $post->post_type =="post" ) {
           $actions = array_merge($actions, array(
               'convert' => sprintf("<a href='%s' onclick=\"if ( confirm( '" . esc_js( __( "Are you sure you want to convert this article?" ) ) . "' ) ) { return true;}return false;\">".__('Convert to recipe', 'orecipes')."</a>",
                   wp_nonce_url( sprintf('edit.php?post_type=recipe&action=convert_to_recipe&post_id=%d', $post->ID),
@@ -106,6 +108,7 @@ class ORecipes {
    public static function convert_to_recipe_action() {
        global $typenow;
        if( 'recipe' != $typenow ) return;
+       if( !current_user_can( 'manage_options') ) return;
        $post_id = isset( $_GET['post_id'] ) ? $_GET['post_id'] : '';
        if( !$post_id ) return;
        check_admin_referer( 'convert-to-recipe_'.$post_id );
