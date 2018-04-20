@@ -188,6 +188,10 @@ td.participation_id img {
 .column-recipe_content {
   width: 45%; }
 
+.column-recipe_id {
+   width: 12%;
+}
+
 /* Clearfix */
 .clear {
   clear: both; }

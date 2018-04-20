@@ -51,6 +51,10 @@ class ORecipes {
       add_filter('manage_users_columns', array( 'ORecipes', 'add_recipes_count_column') );
       add_filter('manage_users_custom_column', array( 'ORecipes', 'manage_recipes_count_column'), 10, 3);
 
+      // Add recipe IDs in recipes admin list
+      add_filter('manage_recipe_posts_columns', array( 'ORecipes', 'add_recipes_ID_column') );
+      add_filter('manage_posts_custom_column', array( 'ORecipes', 'manage_recipes_ID_column'), 10, 2);
+
    }
    private static function init_recipe_post_type() {
 
@@ -1073,6 +1077,19 @@ class ORecipes {
       $where = get_posts_by_author_sql('recipe', TRUE, $user_id);
       return $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->posts $where");
    }
+
+   public static function add_recipes_ID_column($columns) {
+      $columns['recipe_id'] = __( 'ID', 'orecipes' );
+      return $columns;
+   }
+
+   public static function manage_recipes_ID_column($column_name, $post_id) {
+      
+      if( $column_name == 'recipe_id' ) {
+         echo $post_id;
+      }
+   }
+   
 }
 
 ?>
