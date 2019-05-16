@@ -247,7 +247,10 @@ class ORecipes {
       $meta['rest_mf'] = self::time_recipe_mf( $meta['rest_min'] );
       $meta['freezing_time'] = self::time_recipe( $meta['freezing_min'] );
       $meta['freezing_mf'] = self::time_recipe_mf( $meta['freezing_min'] );
-      $meta['time_total_mf'] = self::time_recipe_mf( $meta['preparation_min'] + $meta['cook_min'] );
+      if( isset($meta['cook_min']) && $meta['cook_min'] > 0)
+         $meta['time_total_mf'] = self::time_recipe_mf( $meta['preparation_min'] + $meta['cook_min'] );
+      else
+         $meta['time_total_mf'] = self::time_recipe_mf( $meta['preparation_min'] );
 
       if( preg_match('!(\d+) ?(.+)!i', $meta['yield'], $yield_quantities) ) {
          $meta['serving_count'] = $yield_quantities[1];
