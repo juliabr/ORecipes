@@ -305,11 +305,12 @@ class ORecipes {
          foreach($special_diets as $special_diet) {
             if( has_tag($special_diet, $post) ) {
                $tag =  get_term_by( 'slug', $special_diet, 'post_tag');
-               $meta['special_diets'][$special_diet] = array(
-                  'slug' => $special_diet,
-                  'name' => $tag->name,
-                  'url' => get_term_link($tag),
-               );
+               if($tag)
+                  $meta['special_diets'][$special_diet] = array(
+                     'slug' => $special_diet,
+                     'name' => $tag->name,
+                     'url' => get_term_link($tag),
+                  );
             }
          }
       }
