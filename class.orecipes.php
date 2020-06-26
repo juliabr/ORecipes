@@ -260,8 +260,7 @@ class ORecipes {
 
       $meta['ingredients_array'] = false;
       $meta['filtered_ingredients'] = $meta['ingredients'];
-      preg_match_all('!<li.*?>(.*?)</li>.*?!i', $meta['ingredients'], $ingredients_array);
-      if( !empty($ingredients_array) ) {
+      if( preg_match_all('!<li.*?>(.*?)</li>.*?!i', $meta['ingredients'], $ingredients_array) ) {
          //Try to match quantities and ingredients
          foreach($ingredients_array[1] as $ingredient) {
             $ingredient_with_markup = self::markup_quantity_datas($ingredient);
@@ -269,6 +268,14 @@ class ORecipes {
                $meta['filtered_ingredients'] = str_replace($ingredient, $ingredient_with_markup, $meta['filtered_ingredients']);
          }
          $meta['ingredients_array'] = array_map( 'strip_tags', $ingredients_array[1] );
+      }
+      else {
+         $ingredients_without_headings = preg_replace('|<h[^>]+>(.*)</h[^>]+>|iU', '', $meta['ingredients']);
+         $meta['ingredients_array'] = array_values(
+            array_filter(
+               preg_split('/\n|\r\n?/', strip_tags($ingredients_without_headings) )
+            ) 
+         );
       }
 
       $meta['filtered_ingredients'] = preg_replace('/<li>(.*?)<\/li>/','<li class="ingredient" itemprop="recipeIngredient">$1</li>', $meta['filtered_ingredients']);
@@ -459,7 +466,7 @@ class ORecipes {
    }
 
    public static function time_recipe_mf($m) {
-      if(!$m || !is_numeric($m)) return false;
+      if(!$m || !is_numeric($m)) return 'PT0M';
       $str = 'P';
          
       $h = floor($m/60);
@@ -801,6 +808,21 @@ class ORecipes {
       $thumbnail = wp_get_attachment_image_src( get_post_thumbnail_id( $post->ID ), 'full' );
       $thumbnail_src = $thumbnail[0];
 
+      //Recipe instructions with steps for better accessibility
+      $instructions_array = array_filter( preg_split('/\n|\r\n?/', strip_tags($meta['preparation']) ) );
+      if( empty($instructions_array) ) {
+         $instructions_array = array( strip_tags($meta['preparation']) );
+      }
+      foreach( $instructions_array as $instruction ) {
+         $nospace_instruction =  preg_replace('/(\t|\n|\v|\f|\r| |\xC2\x85|\xc2\xa0|\xe1\xa0\x8e|\xe2\x80[\x80-\x8D]|\xe2\x80\xa8|\xe2\x80\xa9|\xe2\x80\xaF|\xe2\x81\x9f|\xe2\x81\xa0|\xe3\x80\x80|\xef\xbb\xbf)+/', '', $instruction);
+         if( !empty( $nospace_instruction ) && $instruction != '&nbsp;' ) {
+            $recipeInstructions[] = array(
+               '@type' => 'HowToStep',
+               'text' => $instruction
+            );
+         }
+      }
+
       $ld_json = array(
          '@context' => 'http://schema.org',
          '@type' => 'Recipe',
@@ -811,7 +833,7 @@ class ORecipes {
          'name' => $post->post_title,
          'cookTime' => $meta['time_total_mf'],
          'prepTime' => $meta['preparation_mf'],
-         'recipeInstructions' => strip_tags($meta['preparation']),
+         'recipeInstructions' => $recipeInstructions,
          'recipeYield' => $meta['yield']
       );
 
@@ -828,9 +850,24 @@ class ORecipes {
       if( $comments = self::get_comments_schema() ) {
          $ld_json['comment'] = $comments;
       }
-
+      
       if( !empty($meta['ingredients_array']) )
          $ld_json['recipeIngredient'] = $meta['ingredients_array'];
+
+      $post_categories = wp_get_post_terms( $post->ID, 'category', array('orderby' => 'name', 'hierarchical' => 0, 'hide_empty' => 0, 'depth' => 1) );
+      if( !empty($post_categories) & !is_wp_error($post_categories) ) 
+         $ld_json['recipeCategory'] = $post_categories[0]->name;
+
+      //Keywords
+      $content_tags = get_the_tags();
+      if( !empty($content_tags) ) {
+         $keywords = array();
+         foreach($content_tags as $tag) {
+                  $keywords[] = $tag->name;
+         }
+         if( !empty($keywords) )
+            $ld_json['keywords'] = implode(',', $keywords);
+      }
 
       if( !empty($meta['average_rating']) )
          $ld_json['aggregateRating'] = array(
