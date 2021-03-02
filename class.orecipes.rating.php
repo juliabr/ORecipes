@@ -16,7 +16,7 @@ class ORecipes_Rating {
       add_action( 'add_meta_boxes_comment', array( 'ORecipes_Rating', 'extend_comment_add_meta_box') );
       // Update comment meta data from comment editing screen 
       add_action( 'edit_comment', array( 'ORecipes_Rating', 'extend_comment_edit_rating') );
-      //Aff rating metas to recipe metas
+      //Add rating metas to recipe metas
       add_filter( 'orecipes_filter_metas', array( 'ORecipes_Rating', 'get_rating_metas'), 10, 2 );
 	}
 

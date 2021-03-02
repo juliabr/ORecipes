@@ -685,6 +685,7 @@ class ORecipes {
       <div class="input">
          <form method="post" action="options.php">
             <?php settings_fields('orecipes_options'); ?>
+            <?php $activate_testers = isset(self::$options['activate_testers']) ? self::$options['activate_testers'] : 0; ?>
             <?php $activate_rating = isset(self::$options['activate_rating']) ? self::$options['activate_rating'] : 0; ?>
             <?php $use_subtitle = isset(self::$options['use_subtitle']) ? self::$options['use_subtitle'] : 0; ?>
             <?php $use_colors = isset(self::$options['use_colors']) ? self::$options['use_colors'] : 0; ?>
@@ -694,6 +695,15 @@ class ORecipes {
                   <th scope="row"><label for="recipe_slug"><?php _e( 'Recipe Slug', 'orecipes' ); ?></label></th>
                   <td>
                      <input type="text" name="orecipes[recipe_slug]" id="recipe_slug" value="<?php echo self::$options['recipe_slug']; ?>" />
+                  </td>
+               </tr>
+               <tr>
+                  <th scope="row"><label for="activate_testers"><?php _e( 'Use testers meta box for recipes', 'orecipes' ); ?></label></th>
+                  <td>
+                     <select id="activate_testers" name="orecipes[activate_testers]">
+                        <option value="1" <?php selected( $activate_testers, 1); ?>>oui</option>
+                        <option value="0" <?php selected( $activate_testers, 0); ?>>non</option>
+                     </select>
                   </td>
                </tr>
                <tr>

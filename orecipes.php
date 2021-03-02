@@ -63,6 +63,13 @@ if( $activate_rating ) {
    add_action( 'init', array( 'ORecipes_Rating', 'init' ) );
 }
 
+//Recipe testers
+$activate_testers = !empty($options['activate_testers']) ? $options['activate_testers'] : 0;
+if( $activate_testers ) {
+   require_once( ORECIPES__PLUGIN_DIR . 'class.orecipes.testers.php' );
+   add_action( 'init', array( 'ORecipes_Testers', 'init' ) );
+}
+
 //Wrapper
 
 function get_recipe_metas() {

@@ -192,6 +192,32 @@ td.participation_id img {
    width: 12%;
 }
 
+/* Recipe tests */
+
+.orepices-testers {
+  width: 100%;
+  border-bottom: 1px solid #cacaca;
+  margin-bottom: 10px;
+}
+.orepices-testers.with-image {
+  width: 150px;
+  min-height: 150px;
+     padding-right: 10px;
+}
+.orepices-testers .with-image img {
+  max-width: 100%;
+}
+.orepices-testers td {
+  vertical-align: top;
+  padding-bottom: 10px;
+}
+.orepices-testers td.fields label {
+  display: block;
+}
+.orepices-testers td.fields p {
+  margin: 0 0 5px 0;
+}
+
 /* Clearfix */
 .clear {
   clear: both; }
