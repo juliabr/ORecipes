@@ -199,13 +199,13 @@ td.participation_id img {
   border-bottom: 1px solid #cacaca;
   margin-bottom: 10px;
 }
-.orepices-testers.with-image {
+.orepices-testers td.with-image {
   width: 150px;
   min-height: 150px;
-     padding-right: 10px;
+  padding-right: 10px;
 }
-.orepices-testers .with-image img {
-  max-width: 100%;
+.orepices-testers td.with-image img {
+  max-width: 150px;
 }
 .orepices-testers td {
   vertical-align: top;
